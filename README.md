@@ -39,6 +39,9 @@ juego: toda la comunicación pasa por el controlador.
 - Scikit-Learn (árbol de decisión)
 - Pandas (manejo del dataset)
 
+Fuente pixel art: Press Start 2P de Codeman38, licencia SIL Open Font
+License 1.1.
+
 ## Plan de trabajo
 
 **Semana 1 — Lógica del juego, MVC e interfaz gráfica**

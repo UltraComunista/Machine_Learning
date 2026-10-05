@@ -1,9 +1,16 @@
 """Interfaz grafica del juego construida con pygame.
 
+Estilo pixel art: el fondo, las fichas y los botones se dibujan con
+rectangulos, sin imagenes externas. La fuente Press Start 2P es de
+Codeman38 y se distribuye bajo la licencia SIL OFL.
+
 La vista solo renderiza el estado que recibe del controlador y le
 notifica cuando el usuario hace clic en una casilla o en un boton.
 No conoce las reglas del juego: toda la logica vive en el modelo.
 """
+
+import math
+import os
 
 import pygame
 
@@ -21,29 +28,46 @@ class GameView:
     MODO_ML = "Humano vs. IA Machine Learning"
 
     # Paleta de colores
-    FONDO_ARRIBA = (15, 17, 27)
-    FONDO_ABAJO = (29, 33, 53)
-    PANEL = (32, 36, 54)
-    CELDA = (37, 42, 63)
-    CELDA_HOVER = (52, 59, 88)
-    LINEAS = (64, 71, 100)
-    TEXTO = (235, 237, 245)
-    TEXTO_APAGADO = (125, 130, 148)
-    TEXTO_ACENTO = (130, 200, 255)
-    FICHA_X = (96, 165, 250)
-    FICHA_O = (244, 114, 122)
-    RESALTE = (250, 204, 100)
-    BOTON = (54, 60, 88)
-    BOTON_HOVER = (72, 80, 116)
-    BOTON_BORDE = (96, 106, 148)
-    CARTEL = (38, 42, 62)
-    AVISO = (250, 204, 100)
+    CIELO_ARRIBA = (110, 190, 245)
+    CIELO_ABAJO = (205, 235, 250)
+    NUBE = (255, 255, 255)
+    NUBE_SOMBRA = (225, 235, 245)
+    COLINA = (152, 228, 160)
+    ARBUSTO = (96, 198, 110)
+    PASTO = (86, 208, 96)
+    PASTO_OSCURO = (58, 178, 82)
+    LADRILLO = (150, 150, 162)
+    MORTERO = (105, 105, 118)
+    CASILLA = (255, 250, 230)
+    CASILLA_HOVER = (255, 243, 170)
+    CASILLA_GANADA = (255, 205, 60)
+    REJA = (110, 75, 40)
+    PANEL = (255, 243, 200)
+    PANEL_BORDE = (120, 80, 40)
+    TEXTO = (92, 60, 30)
+    TEXTO_APAGADO = (170, 150, 125)
+    FICHA_X = (56, 105, 220)
+    FICHA_O = (238, 92, 60)
+    CORAZON = (228, 52, 52)
+    BOTON = (104, 190, 100)
+    BOTON_HOVER = (128, 216, 120)
+    BOTON_APAGADO = (172, 172, 172)
+    BOTON_CLARO = (190, 240, 180)
+    BOTON_OSCURO = (60, 130, 62)
+    BOTON_SALIR = (222, 104, 88)
+    BOTON_SALIR_HOVER = (238, 128, 110)
+    BOTON_SALIR_OSCURO = (150, 60, 50)
+    CARTEL = (255, 248, 222)
 
-    ANCHO = 720
+    ANCHO = 900
     ALTO = 540
     MARGEN = 30
     TAM_CELDA = 160
-    PANEL_X = 540
+    PANEL_X = 510
+
+    _BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    RUTA_FUENTE = os.path.join(
+        _BASE, "assets", "fonts", "PressStart2P-Regular.ttf")
 
     def __init__(self):
         pygame.init()
@@ -51,11 +75,10 @@ class GameView:
         self.ventana = pygame.display.set_mode((self.ANCHO, self.ALTO))
         self.reloj = pygame.time.Clock()
 
-        self.fuente = pygame.font.SysFont("arial", 20)
-        self.fuente_pequena = pygame.font.SysFont("arial", 16)
-        self.fuente_boton = pygame.font.SysFont("arial", 21, bold=True)
-        self.fuente_grande = pygame.font.SysFont("arial", 26, bold=True)
-        self.fuente_titulo = pygame.font.SysFont("arial", 64, bold=True)
+        self.fuente_titulo = pygame.font.Font(self.RUTA_FUENTE, 34)
+        self.fuente_grande = pygame.font.Font(self.RUTA_FUENTE, 15)
+        self.fuente = pygame.font.Font(self.RUTA_FUENTE, 12)
+        self.fuente_pequena = pygame.font.Font(self.RUTA_FUENTE, 10)
 
         self.ejecutando = True
         self.pantalla = "menu"
@@ -81,43 +104,43 @@ class GameView:
     # Construccion de la interfaz
 
     def _crear_botones_menu(self):
-        ancho, alto = 360, 54
+        ancho, alto = 430, 50
         x = (self.ANCHO - ancho) // 2
         return [
-            {"rect": pygame.Rect(x, 240, ancho, alto),
+            {"rect": pygame.Rect(x, 230, ancho, alto),
              "texto": "Humano vs. Humano",
              "accion": "jugar_humano", "habilitado": True},
-            {"rect": pygame.Rect(x, 310, ancho, alto),
+            {"rect": pygame.Rect(x, 295, ancho, alto),
              "texto": "Humano vs. IA Minimax",
              "accion": "aviso_minimax", "habilitado": False},
-            {"rect": pygame.Rect(x, 380, ancho, alto),
+            {"rect": pygame.Rect(x, 360, ancho, alto),
              "texto": "Humano vs. IA Machine Learning",
              "accion": "aviso_ml", "habilitado": False},
-            {"rect": pygame.Rect(x, 470, ancho, alto),
+            {"rect": pygame.Rect(x, 445, ancho, alto),
              "texto": "Salir",
-             "accion": "salir", "habilitado": True},
+             "accion": "salir", "habilitado": True, "salir": True},
         ]
 
     def _crear_botones_juego(self):
-        ancho, alto = 150, 40
+        ancho, alto = 160, 42
         x = self.PANEL_X + 15
         return [
-            {"rect": pygame.Rect(x, 410, ancho, alto),
+            {"rect": pygame.Rect(x, 415, ancho, alto),
              "texto": "Reiniciar",
              "accion": "reiniciar", "habilitado": True},
-            {"rect": pygame.Rect(x, 460, ancho, alto),
+            {"rect": pygame.Rect(x + 180, 415, ancho, alto),
              "texto": "Menú",
              "accion": "volver_menu", "habilitado": True},
         ]
 
     def _crear_botones_fin(self):
-        ancho, alto = 210, 46
+        ancho, alto = 220, 46
         y = 330
         return [
-            {"rect": pygame.Rect(130, y, ancho, alto),
+            {"rect": pygame.Rect(200, y, ancho, alto),
              "texto": "Jugar de nuevo",
              "accion": "otra_vez", "habilitado": True},
-            {"rect": pygame.Rect(380, y, ancho, alto),
+            {"rect": pygame.Rect(480, y, ancho, alto),
              "texto": "Menú",
              "accion": "volver_menu", "habilitado": True},
         ]
@@ -196,7 +219,7 @@ class GameView:
     # Dibujo de la interfaz
 
     def _dibujar(self):
-        self._dibujar_fondo()
+        self._dibujar_escena()
         if self.pantalla == "menu":
             self._dibujar_menu()
         else:
@@ -204,32 +227,85 @@ class GameView:
             if self.partida_terminada:
                 self._dibujar_cartel_final()
 
-    def _dibujar_fondo(self):
-        """Degradado vertical de arriba hacia abajo."""
+    def _dibujar_escena(self):
+        """Cielo, nubes, colinas, pasto y corazones de decoracion."""
         for y in range(self.ALTO):
             mezcla = y / self.ALTO
             color = tuple(
                 int(a + (b - a) * mezcla)
-                for a, b in zip(self.FONDO_ARRIBA, self.FONDO_ABAJO)
+                for a, b in zip(self.CIELO_ARRIBA, self.CIELO_ABAJO)
             )
             pygame.draw.line(self.ventana, color, (0, y), (self.ANCHO, y))
 
-    def _dibujar_menu(self):
-        # Decoracion: una X y una O gigantes y tenues a los lados
-        self._dibujar_ficha_gigante("X", 90, 340, 60)
-        self._dibujar_ficha_gigante("O", 630, 120, 60)
+        self._dibujar_nube(70, 70, 2)
+        self._dibujar_nube(330, 40, 1)
+        self._dibujar_nube(660, 90, 2)
 
-        parte1 = self.fuente_titulo.render("Tres en ", True, self.TEXTO)
-        parte2 = self.fuente_titulo.render("Raya", True, self.TEXTO_ACENTO)
-        ancho_total = parte1.get_width() + parte2.get_width()
-        x = (self.ANCHO - ancho_total) // 2
-        self.ventana.blit(parte1, (x, 95))
-        self.ventana.blit(parte2, (x + parte1.get_width(), 95))
+        # Colinas y arbustos del fondo
+        pygame.draw.circle(self.ventana, self.COLINA, (80, 520), 130)
+        pygame.draw.circle(self.ventana, self.COLINA, (280, 540), 110)
+        pygame.draw.circle(self.ventana, self.ARBUSTO, (160, 530), 55)
+        pygame.draw.circle(self.ventana, self.ARBUSTO, (380, 535), 45)
+
+        # Franja de pasto con mechones
+        pygame.draw.rect(self.ventana, self.PASTO,
+                         (0, self.ALTO - 40, self.ANCHO, 40))
+        for x in range(0, self.ANCHO, 26):
+            alto_mecho = 8 if (x // 26) % 2 == 0 else 5
+            pygame.draw.rect(self.ventana, self.PASTO_OSCURO,
+                             (x, self.ALTO - 40, 14, alto_mecho))
+
+        self._dibujar_corazones()
+
+    def _dibujar_nube(self, x, y, escala):
+        sombra = (x + 4 * escala, y + 5 * escala, 90 * escala, 24 * escala)
+        pygame.draw.rect(self.ventana, self.NUBE_SOMBRA, sombra)
+        pygame.draw.rect(self.ventana, self.NUBE,
+                         (x, y + 8 * escala, 90 * escala, 22 * escala))
+        pygame.draw.rect(self.ventana, self.NUBE,
+                         (x + 12 * escala, y, 34 * escala, 20 * escala))
+        pygame.draw.rect(self.ventana, self.NUBE,
+                         (x + 44 * escala, y - 6 * escala, 38 * escala,
+                          26 * escala))
+        pygame.draw.rect(self.ventana, self.NUBE,
+                         (x + 66 * escala, y + 2 * escala, 26 * escala,
+                          16 * escala))
+
+    def _dibujar_corazones(self):
+        patron = [
+            ".XX.XX.",
+            "XXXXXXX",
+            "XXXXXXX",
+            ".XXXXX.",
+            "..XXX..",
+            "...X...",
+        ]
+        escala = 4
+        for numero in range(3):
+            origen_x = 24 + numero * 40
+            origen_y = 18
+            for fila, renglon in enumerate(patron):
+                for columna, pixel in enumerate(renglon):
+                    if pixel == "X":
+                        pygame.draw.rect(
+                            self.ventana, self.CORAZON,
+                            (origen_x + columna * escala,
+                             origen_y + fila * escala,
+                             escala, escala))
+
+    def _dibujar_menu(self):
+        titulo = self.fuente_titulo.render("Tres en Raya", True,
+                                           self.TEXTO)
+        sombra = self.fuente_titulo.render("Tres en Raya", True,
+                                           self.PANEL_BORDE)
+        x = (self.ANCHO - titulo.get_width()) // 2
+        self.ventana.blit(sombra, (x + 4, 108))
+        self.ventana.blit(titulo, (x, 100))
 
         subtitulo = self.fuente.render(
-            "El clásico juego de estrategia", True, self.TEXTO_APAGADO)
+            "El clasico juego de estrategia", True, self.TEXTO)
         self.ventana.blit(
-            subtitulo, ((self.ANCHO - subtitulo.get_width()) // 2, 175))
+            subtitulo, ((self.ANCHO - subtitulo.get_width()) // 2, 165))
 
         for boton in self.botones_menu:
             self._dibujar_boton(boton)
@@ -238,29 +314,34 @@ class GameView:
             if pygame.time.get_ticks() > self._aviso_hasta:
                 self.aviso = None
             else:
-                superficie = self.fuente.render(self.aviso, True, self.AVISO)
+                superficie = self.fuente.render(self.aviso, True,
+                                                self.FICHA_O)
                 pos_x = (self.ANCHO - superficie.get_width()) // 2
-                self.ventana.blit(superficie, (pos_x, 445))
-
-    def _dibujar_ficha_gigante(self, valor, centro_x, centro_y, radio):
-        capa = pygame.Surface((self.ANCHO, self.ALTO), pygame.SRCALPHA)
-        color = self.FICHA_X if valor == "X" else self.FICHA_O
-        color = color + (28,)  # muy transparente
-        if valor == "X":
-            pygame.draw.line(capa, color,
-                             (centro_x - radio, centro_y - radio),
-                             (centro_x + radio, centro_y + radio), 22)
-            pygame.draw.line(capa, color,
-                             (centro_x - radio, centro_y + radio),
-                             (centro_x + radio, centro_y - radio), 22)
-        else:
-            pygame.draw.circle(capa, color, (centro_x, centro_y),
-                               radio, 20)
-        self.ventana.blit(capa, (0, 0))
+                self.ventana.blit(superficie, (pos_x, 425))
 
     def _dibujar_juego(self):
+        self._dibujar_marco_tablero()
         self._dibujar_tablero()
         self._dibujar_panel()
+
+    def _dibujar_marco_tablero(self):
+        """Marco de ladrillos alrededor del tablero."""
+        x0 = self.MARGEN - 14
+        y0 = self.MARGEN - 14
+        lado = 3 * self.TAM_CELDA + 28
+        pygame.draw.rect(self.ventana, self.LADRILLO, (x0, y0, lado, lado))
+        # Juntas horizontales del muro
+        for y in range(y0 + 8, y0 + lado, 16):
+            pygame.draw.line(self.ventana, self.MORTERO, (x0, y),
+                             (x0 + lado, y), 2)
+        # Juntas verticales, corridas en cada hilada
+        hilada = 0
+        for y in range(y0, y0 + lado, 16):
+            desfase = 10 if hilada % 2 == 0 else 22
+            for x in range(x0 + desfase, x0 + lado, 24):
+                pygame.draw.line(self.ventana, self.MORTERO, (x, y),
+                                 (x, min(y + 16, y0 + lado)), 2)
+            hilada += 1
 
     def _dibujar_tablero(self):
         raton = pygame.mouse.get_pos()
@@ -270,17 +351,18 @@ class GameView:
                 y = self.MARGEN + fila * self.TAM_CELDA
                 rect = pygame.Rect(x, y, self.TAM_CELDA, self.TAM_CELDA)
 
-                resaltada = (fila, columna) in self.celdas_resaltadas
-                if resaltada:
-                    color = self.RESALTE
+                if (fila, columna) in self.celdas_resaltadas:
+                    color = self.CASILLA_GANADA
                 elif (not self.partida_terminada
                       and self.tablero[fila][columna] == " "
-                      and rect.inflate(-6, -6).collidepoint(raton)):
-                    color = self.CELDA_HOVER
+                      and rect.inflate(-8, -8).collidepoint(raton)):
+                    color = self.CASILLA_HOVER
                 else:
-                    color = self.CELDA
-                pygame.draw.rect(self.ventana, color, rect.inflate(-6, -6),
-                                 border_radius=10)
+                    color = self.CASILLA
+                pygame.draw.rect(self.ventana, color,
+                                 rect.inflate(-8, -8))
+                pygame.draw.rect(self.ventana, self.REJA,
+                                 rect.inflate(-8, -8), 3)
 
                 self._dibujar_ficha(fila, columna)
 
@@ -292,31 +374,50 @@ class GameView:
             + self.TAM_CELDA // 2
         centro_y = self.MARGEN + fila * self.TAM_CELDA \
             + self.TAM_CELDA // 2
-        radio = self.TAM_CELDA // 2 - 34
+        radio = self.TAM_CELDA // 2 - 40
         if valor == "X":
             color = self.FICHA_X
+            grosor = 16
             pygame.draw.line(self.ventana, color,
                              (centro_x - radio, centro_y - radio),
-                             (centro_x + radio, centro_y + radio), 12)
+                             (centro_x + radio, centro_y + radio), grosor)
             pygame.draw.line(self.ventana, color,
                              (centro_x - radio, centro_y + radio),
-                             (centro_x + radio, centro_y - radio), 12)
+                             (centro_x + radio, centro_y - radio), grosor)
+            # Taponcitos cuadrados en las puntas, aire pixel
+            for dx, dy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
+                px = centro_x + dx * radio - 8
+                py = centro_y + dy * radio - 8
+                pygame.draw.rect(self.ventana, color, (px, py, 16, 16))
         else:
-            pygame.draw.circle(self.ventana, self.FICHA_O,
-                               (centro_x, centro_y), radio, 10)
+            # O hecha de bloques alrededor de un circulo
+            color = self.FICHA_O
+            bloque = 18
+            for i in range(12):
+                angulo = 2 * math.pi * i / 12
+                px = centro_x + int(radio * math.cos(angulo)) - bloque // 2
+                py = centro_y + int(radio * math.sin(angulo)) - bloque // 2
+                pygame.draw.rect(self.ventana, color,
+                                 (px, py, bloque, bloque))
 
     def _dibujar_panel(self):
         pygame.draw.rect(self.ventana, self.PANEL,
                          (self.PANEL_X, 0, self.ANCHO - self.PANEL_X,
                           self.ALTO))
+        pygame.draw.rect(self.ventana, self.PANEL_BORDE,
+                         (self.PANEL_X, 0, self.ANCHO - self.PANEL_X,
+                          self.ALTO), 4)
+        pygame.draw.line(self.ventana, self.PANEL_BORDE,
+                         (self.PANEL_X + 8, self.ALTO - 12),
+                         (self.ANCHO - 8, self.ALTO - 12), 2)
 
         modo = self.fuente_pequena.render(self.modo, True,
                                           self.TEXTO_APAGADO)
-        self.ventana.blit(modo, (self.PANEL_X + 15, 20))
+        self.ventana.blit(modo, (self.PANEL_X + 20, 24))
 
         estado = self.fuente_grande.render(self.texto_estado, True,
                                            self.TEXTO)
-        self.ventana.blit(estado, (self.PANEL_X + 15, 55))
+        self.ventana.blit(estado, (self.PANEL_X + 20, 60))
 
         self._dibujar_metricas()
 
@@ -324,34 +425,31 @@ class GameView:
             self._dibujar_boton(boton)
 
     def _dibujar_metricas(self):
-        y = 160
-        pygame.draw.line(self.ventana, self.LINEAS,
-                         (self.PANEL_X + 15, y - 15),
-                         (self.ANCHO - 15, y - 15), 1)
+        y = 150
+        pygame.draw.line(self.ventana, self.PANEL_BORDE,
+                         (self.PANEL_X + 20, y - 12),
+                         (self.ANCHO - 20, y - 12), 2)
         nodos = "-" if self.nodos is None else str(self.nodos)
         tiempo = "-" if self.tiempo_ms is None \
             else "{:.2f} ms".format(self.tiempo_ms)
-        for etiqueta in ("Nodos explorados: " + nodos,
-                         "Tiempo: " + tiempo):
+        for etiqueta in ("Nodos: " + nodos, "Tiempo: " + tiempo):
             superficie = self.fuente.render(etiqueta, True, self.TEXTO)
-            self.ventana.blit(superficie, (self.PANEL_X + 15, y))
-            y += 30
+            self.ventana.blit(superficie, (self.PANEL_X + 20, y))
+            y += 28
 
     def _dibujar_cartel_final(self):
-        # Oscurece la partida detras del cartel
         velo = pygame.Surface((self.ANCHO, self.ALTO), pygame.SRCALPHA)
-        velo.fill((10, 12, 20, 170))
+        velo.fill((40, 60, 40, 130))
         self.ventana.blit(velo, (0, 0))
 
-        cartel = pygame.Rect(110, 140, 500, 260)
-        pygame.draw.rect(self.ventana, self.CARTEL, cartel, border_radius=14)
-        pygame.draw.rect(self.ventana, self.BOTON_BORDE, cartel, 2,
-                         border_radius=14)
+        cartel = pygame.Rect(170, 140, 560, 260)
+        pygame.draw.rect(self.ventana, self.CARTEL, cartel)
+        pygame.draw.rect(self.ventana, self.PANEL_BORDE, cartel, 4)
 
         resultado = self.fuente_titulo.render(self.texto_estado, True,
                                               self.TEXTO)
         pos_x = cartel.x + (cartel.width - resultado.get_width()) // 2
-        self.ventana.blit(resultado, (pos_x, 195))
+        self.ventana.blit(resultado, (pos_x, 205))
 
         for boton in self.botones_fin:
             self._dibujar_boton(boton)
@@ -362,25 +460,37 @@ class GameView:
         en_hover = boton["habilitado"] and rect.collidepoint(raton)
 
         if not boton["habilitado"]:
-            color, color_texto = self.BOTON, self.TEXTO_APAGADO
-        elif en_hover:
-            color, color_texto = self.BOTON_HOVER, self.TEXTO
+            base, texto = self.BOTON_APAGADO, (235, 235, 235)
+        elif boton.get("salir"):
+            base = self.BOTON_SALIR_HOVER if en_hover else self.BOTON_SALIR
+            texto = (255, 255, 255)
         else:
-            color, color_texto = self.BOTON, self.TEXTO
+            base = self.BOTON_HOVER if en_hover else self.BOTON
+            texto = self.TEXTO
 
-        # Sombra debajo del boton
-        sombra = rect.copy()
-        sombra.y += 3
-        pygame.draw.rect(self.ventana, (18, 20, 32), sombra,
-                         border_radius=10)
-        pygame.draw.rect(self.ventana, color, rect, border_radius=10)
-        pygame.draw.rect(self.ventana, self.BOTON_BORDE, rect, 1,
-                         border_radius=10)
+        pygame.draw.rect(self.ventana, base, rect)
+        # Relieve pixel: claro arriba/izquierda, oscuro abajo/derecha
+        if boton["habilitado"]:
+            claro = (self.BOTON_CLARO if not boton.get("salir")
+                     else (250, 170, 155))
+            oscuro = (self.BOTON_OSCURO if not boton.get("salir")
+                      else self.BOTON_SALIR_OSCURO)
+        else:
+            claro, oscuro = (200, 200, 200), (140, 140, 140)
+        pygame.draw.line(self.ventana, claro, rect.topleft,
+                         (rect.right - 1, rect.top), 3)
+        pygame.draw.line(self.ventana, claro, rect.topleft,
+                         (rect.left, rect.bottom - 1), 3)
+        pygame.draw.line(self.ventana, oscuro, (rect.left, rect.bottom - 1),
+                         (rect.right - 1, rect.bottom - 1), 3)
+        pygame.draw.line(self.ventana, oscuro, (rect.right - 1, rect.top),
+                         (rect.right - 1, rect.bottom - 1), 3)
 
-        texto = self.fuente_boton.render(boton["texto"], True, color_texto)
-        pos_x = rect.x + (rect.width - texto.get_width()) // 2
-        pos_y = rect.y + (rect.height - texto.get_height()) // 2
-        self.ventana.blit(texto, (pos_x, pos_y))
+        fuente = self.fuente_grande if rect.width <= 180 else self.fuente
+        superficie = fuente.render(boton["texto"], True, texto)
+        pos_x = rect.x + (rect.width - superficie.get_width()) // 2
+        pos_y = rect.y + (rect.height - superficie.get_height()) // 2
+        self.ventana.blit(superficie, (pos_x, pos_y))
 
     # Metodos que usa el controlador para actualizar la interfaz
 
