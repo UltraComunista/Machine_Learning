@@ -67,3 +67,15 @@ juego: toda la comunicación pasa por el controlador.
 ```bash
 pip install -r requirements.txt
 ```
+
+## Ejecutar el juego
+
+```bash
+python3 main.py
+```
+
+## Ejecutar las pruebas
+
+```bash
+python3 -m unittest discover tests -v
+```
