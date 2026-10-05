@@ -35,7 +35,7 @@ juego: toda la comunicación pasa por el controlador.
 ## Tecnologías
 
 - Python 3
-- Tkinter (interfaz gráfica)
+- Pygame (interfaz gráfica)
 - Scikit-Learn (árbol de decisión)
 - Pandas (manejo del dataset)
 

@@ -1,7 +1,5 @@
+pygame
 pandas
 scikit-learn
 graphviz
 matplotlib
-
-# tkinter no se instala con pip: en macOS con Homebrew usar
-# brew install python-tk@<version>
