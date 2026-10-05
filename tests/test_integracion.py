@@ -22,6 +22,7 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
 
     def setUp(self):
         self.vista = GameView()
+        self.vista.pantalla = "juego"
         self.modelo = GameModel()
         self.controlador = GameController(self.modelo, self.vista)
 
@@ -32,17 +33,26 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
         for fila, columna in movimientos:
             self.controlador.manejar_clic_celda(fila, columna)
 
+    def boton(self, accion):
+        for grupo in (self.vista.botones_menu, self.vista.botones_juego,
+                      self.vista.botones_fin):
+            for b in grupo:
+                if b["accion"] == accion:
+                    return b
+        raise AssertionError("boton no encontrado: " + accion)
+
     def test_victoria_de_x_en_fila(self):
         self.jugar([(0, 0), (1, 0), (0, 1), (1, 1), (0, 2)])
         self.assertTrue(self.modelo.hay_ganador("X"))
-        self.assertEqual(self.vista.texto_estado, "Gana X")
+        self.assertEqual(self.vista.texto_estado, "¡Gana X!")
+        self.assertTrue(self.vista.partida_terminada)
         self.assertEqual(self.vista.tablero[0][0], "X")
         self.assertEqual(self.vista.tablero[0][2], "X")
 
     def test_victoria_de_o_en_columna(self):
         self.jugar([(0, 0), (1, 1), (0, 2), (0, 1), (2, 0), (2, 1)])
         self.assertTrue(self.modelo.hay_ganador("O"))
-        self.assertEqual(self.vista.texto_estado, "Gana O")
+        self.assertEqual(self.vista.texto_estado, "¡Gana O!")
 
     def test_victoria_en_diagonal(self):
         self.jugar([(0, 0), (0, 1), (1, 1), (0, 2), (2, 2)])
@@ -53,7 +63,7 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
                     (1, 1), (1, 0), (2, 0),
                     (1, 2), (2, 2), (2, 1)])
         self.assertTrue(self.modelo.hay_empate())
-        self.assertEqual(self.vista.texto_estado, "Empate")
+        self.assertEqual(self.vista.texto_estado, "¡Empate!")
 
     def test_clic_en_casilla_ocupada_se_ignora(self):
         self.controlador.manejar_clic_celda(1, 1)
@@ -74,7 +84,8 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
             for columna in range(3):
                 self.assertEqual(self.modelo.tablero[fila][columna], " ")
                 self.assertEqual(self.vista.tablero[fila][columna], " ")
-        self.assertEqual(self.vista.texto_estado, "Turno de X")
+        self.assertEqual(self.vista.texto_estado, "Turno del jugador X")
+        self.assertFalse(self.vista.partida_terminada)
         self.assertEqual(self.modelo.jugador_actual, "X")
 
     def test_cambio_de_modo_reinicia_la_partida(self):
@@ -82,21 +93,31 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
         self.controlador.manejar_cambio_modo()
         self.assertEqual(self.modelo.tablero[1][1], " ")
 
+    def test_menu_a_pantalla_de_juego(self):
+        self.vista.pantalla = "menu"
+        self.jugar([(0, 0)])
+        self.vista._manejar_click(self.boton("jugar_humano")["rect"].center)
+        self.assertEqual(self.vista.pantalla, "juego")
+        self.assertEqual(self.modelo.tablero[0][0], " ")
+
     def test_modo_minimax_bloqueado_muestra_aviso(self):
-        boton = next(b for b in self.vista.botones
-                     if b["accion"] == "modo_minimax")
-        centro = boton["rect"].center
-        self.vista._manejar_click(centro)
+        self.vista.pantalla = "menu"
+        self.vista._manejar_click(self.boton("aviso_minimax")["rect"].center)
         self.assertEqual(self.vista.aviso, "Disponible en la semana 2")
         self.assertEqual(self.vista.obtener_modo(), GameView.MODO_HUMANO)
 
     def test_modo_ml_bloqueado_muestra_aviso(self):
-        boton = next(b for b in self.vista.botones
-                     if b["accion"] == "modo_ml")
-        centro = boton["rect"].center
-        self.vista._manejar_click(centro)
+        self.vista.pantalla = "menu"
+        self.vista._manejar_click(self.boton("aviso_ml")["rect"].center)
         self.assertEqual(self.vista.aviso, "Disponible en la semana 3")
         self.assertEqual(self.vista.obtener_modo(), GameView.MODO_HUMANO)
+
+    def test_boton_jugar_de_nuevo_reinicia(self):
+        self.jugar([(0, 0), (1, 0), (0, 1), (1, 1), (0, 2)])
+        self.assertTrue(self.vista.partida_terminada)
+        self.vista._manejar_click(self.boton("otra_vez")["rect"].center)
+        self.assertFalse(self.vista.partida_terminada)
+        self.assertEqual(self.modelo.tablero[0][0], " ")
 
 
 if __name__ == "__main__":
