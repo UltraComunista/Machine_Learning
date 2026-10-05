@@ -49,8 +49,12 @@ class GameController:
         """Refleja el estado del modelo en la interfaz."""
         self.vista.actualizar_tablero(self.modelo.tablero)
         if self.modelo.hay_ganador(self.modelo.JUGADOR_X):
+            self.vista.resaltar_celdas(
+                self.modelo.linea_ganadora(self.modelo.JUGADOR_X))
             self.vista.mostrar_ganador(self.modelo.JUGADOR_X)
         elif self.modelo.hay_ganador(self.modelo.JUGADOR_O):
+            self.vista.resaltar_celdas(
+                self.modelo.linea_ganadora(self.modelo.JUGADOR_O))
             self.vista.mostrar_ganador(self.modelo.JUGADOR_O)
         elif self.modelo.hay_empate():
             self.vista.mostrar_empate()

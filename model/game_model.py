@@ -56,21 +56,28 @@ class GameModel:
                     movimientos.append((fila, columna))
         return movimientos
 
-    def hay_ganador(self, jugador):
-        """Verifica si el jugador tiene tres fichas en linea."""
+    def linea_ganadora(self, jugador):
+        """Devuelve las tres casillas que forman la linea ganadora del
+        jugador, o None si no hay ninguna."""
         lineas = []
 
         # Filas y columnas
         for i in range(3):
-            lineas.append([self.tablero[i][c] for c in range(3)])
-            lineas.append([self.tablero[f][i] for f in range(3)])
+            lineas.append([(i, c) for c in range(3)])
+            lineas.append([(f, i) for f in range(3)])
 
         # Diagonales
-        lineas.append([self.tablero[i][i] for i in range(3)])
-        lineas.append([self.tablero[i][2 - i] for i in range(3)])
+        lineas.append([(i, i) for i in range(3)])
+        lineas.append([(i, 2 - i) for i in range(3)])
 
-        return any(all(casilla == jugador for casilla in linea)
-                   for linea in lineas)
+        for linea in lineas:
+            if all(self.tablero[f][c] == jugador for f, c in linea):
+                return linea
+        return None
+
+    def hay_ganador(self, jugador):
+        """Verifica si el jugador tiene tres fichas en linea."""
+        return self.linea_ganadora(jugador) is not None
 
     def tablero_lleno(self):
         """Verifica si ya no quedan casillas vacias."""

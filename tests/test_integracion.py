@@ -48,6 +48,11 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
         self.assertTrue(self.vista.partida_terminada)
         self.assertEqual(self.vista.tablero[0][0], "X")
         self.assertEqual(self.vista.tablero[0][2], "X")
+        # La linea ganadora se resalta en la vista
+        self.assertEqual(self.modelo.linea_ganadora("X"),
+                         [(0, 0), (0, 1), (0, 2)])
+        self.assertEqual(self.vista.celdas_resaltadas,
+                         [(0, 0), (0, 1), (0, 2)])
 
     def test_victoria_de_o_en_columna(self):
         self.jugar([(0, 0), (1, 1), (0, 2), (0, 1), (2, 0), (2, 1)])
@@ -86,6 +91,7 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
                 self.assertEqual(self.vista.tablero[fila][columna], " ")
         self.assertEqual(self.vista.texto_estado, "Turno del jugador X")
         self.assertFalse(self.vista.partida_terminada)
+        self.assertEqual(self.vista.celdas_resaltadas, [])
         self.assertEqual(self.modelo.jugador_actual, "X")
 
     def test_cambio_de_modo_reinicia_la_partida(self):
