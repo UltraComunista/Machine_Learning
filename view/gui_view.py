@@ -7,6 +7,21 @@ Codeman38 y se distribuye bajo la licencia SIL OFL.
 La vista solo renderiza el estado que recibe del controlador y le
 notifica cuando el usuario hace clic en una casilla o en un boton.
 No conoce las reglas del juego: toda la logica vive en el modelo.
+
+Mapa de la clase, por bloques:
+
+- Constantes: paleta de colores y geometria (ANCHO, MARGEN, etc.).
+- __init__: crea la ventana, las fuentes y los grupos de botones.
+- Construccion: _crear_botones_menu/_juego/_fin definen rect y accion
+  de cada boton (accion es el identificador interno, texto lo visible).
+- Eventos: ejecutar() es el bucle del juego (30 fps); _manejar_click
+  decide si el clic cayó en un boton o en una casilla del tablero;
+  _activar_boton ejecuta la accion correspondiente.
+- Dibujo: _dibujar_* pintan cada cosa (escena, menu, tablero, panel,
+  cartel final, botones). Se redibuja TODO en cada vuelta del bucle.
+- API del controlador: actualizar_tablero, mostrar_turno/ganador/
+  empate, mostrar_metricas, etc. Son los metodos que el controlador
+  llama para que la vista refleje el estado del modelo.
 """
 
 import math
@@ -59,11 +74,15 @@ class GameView:
     BOTON_SALIR_OSCURO = (150, 60, 50)
     CARTEL = (255, 248, 222)
 
-    ANCHO = 900
-    ALTO = 540
-    MARGEN = 30
-    TAM_CELDA = 160
-    PANEL_X = 510
+    # Geometria de la ventana: aqui se ajusta el espaciado general.
+    # El tablero ocupa desde MARGEN hasta MARGEN + 3 * TAM_CELDA, y el
+    # marco de ladrillos se dibuja 14 px mas alla. Si el panel queda
+    # muy pegado al tablero, sube PANEL_X (y ANCHO para que quepa).
+    ANCHO = 960      # ancho total de la ventana
+    ALTO = 600       # alto total de la ventana
+    MARGEN = 40      # separacion del tablero con el borde izq. y sup.
+    TAM_CELDA = 160  # tamano de cada casilla del tablero
+    PANEL_X = 560    # posicion X donde empieza el panel lateral
 
     _BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     RUTA_FUENTE = os.path.join(
@@ -92,10 +111,10 @@ class GameView:
         self.aviso = None
         self._aviso_hasta = 0
 
-        # Callbacks que registra el controlador
-        self.on_celda_click = None
-        self.on_reiniciar = None
-        self.on_cambio_modo = None
+        # Referencia al controlador: main.py se la asigna despues de
+        # crear ambos. Con ella la vista le avisa directo cuando el
+        # usuario hace clic, sin conocer la logica del juego.
+        self.controlador = None
 
         self.botones_menu = self._crear_botones_menu()
         self.botones_juego = self._crear_botones_juego()
@@ -172,8 +191,10 @@ class GameView:
         if self._click_en_botones(self.botones_juego, pos):
             return
         celda = self._celda_en_posicion(pos)
-        if celda is not None and self.on_celda_click is not None:
-            self.on_celda_click(*celda)
+        if celda is not None and self.controlador is not None:
+            print("[VISTA] Clic en la celda {} -> aviso al controlador"
+                  .format(celda))
+            self.controlador.manejar_clic_celda(*celda)
 
     def _click_en_botones(self, botones, pos):
         for boton in botones:
@@ -192,13 +213,13 @@ class GameView:
         elif accion == "volver_menu":
             self.pantalla = "menu"
         elif accion == "reiniciar" or accion == "otra_vez":
-            if self.on_reiniciar is not None:
-                self.on_reiniciar()
+            if self.controlador is not None:
+                self.controlador.manejar_reinicio()
         elif accion == "jugar_humano":
             self.pantalla = "juego"
             self.modo = self.MODO_HUMANO
-            if self.on_cambio_modo is not None:
-                self.on_cambio_modo()
+            if self.controlador is not None:
+                self.controlador.manejar_cambio_modo()
 
     def _mostrar_aviso(self, accion):
         if accion == "aviso_minimax":
@@ -255,8 +276,6 @@ class GameView:
             pygame.draw.rect(self.ventana, self.PASTO_OSCURO,
                              (x, self.ALTO - 40, 14, alto_mecho))
 
-        self._dibujar_corazones()
-
     def _dibujar_nube(self, x, y, escala):
         sombra = (x + 4 * escala, y + 5 * escala, 90 * escala, 24 * escala)
         pygame.draw.rect(self.ventana, self.NUBE_SOMBRA, sombra)
@@ -271,35 +290,12 @@ class GameView:
                          (x + 66 * escala, y + 2 * escala, 26 * escala,
                           16 * escala))
 
-    def _dibujar_corazones(self):
-        patron = [
-            ".XX.XX.",
-            "XXXXXXX",
-            "XXXXXXX",
-            ".XXXXX.",
-            "..XXX..",
-            "...X...",
-        ]
-        escala = 4
-        for numero in range(3):
-            origen_x = 24 + numero * 40
-            origen_y = 18
-            for fila, renglon in enumerate(patron):
-                for columna, pixel in enumerate(renglon):
-                    if pixel == "X":
-                        pygame.draw.rect(
-                            self.ventana, self.CORAZON,
-                            (origen_x + columna * escala,
-                             origen_y + fila * escala,
-                             escala, escala))
-
     def _dibujar_menu(self):
         titulo = self.fuente_titulo.render("Tres en Raya", True,
                                            self.TEXTO)
-        sombra = self.fuente_titulo.render("Tres en Raya", True,
-                                           self.PANEL_BORDE)
+
         x = (self.ANCHO - titulo.get_width()) // 2
-        self.ventana.blit(sombra, (x + 4, 108))
+        # self.ventana.blit(sombra, (x + 4, 108))
         self.ventana.blit(titulo, (x, 100))
 
         subtitulo = self.fuente.render(
@@ -415,8 +411,7 @@ class GameView:
                                           self.TEXTO_APAGADO)
         self.ventana.blit(modo, (self.PANEL_X + 20, 24))
 
-        estado = self.fuente_grande.render(self.texto_estado, True,
-                                           self.TEXTO)
+        estado = self.fuente_grande.render(self.texto_estado, True, self.TEXTO)
         self.ventana.blit(estado, (self.PANEL_X + 20, 60))
 
         self._dibujar_metricas()

@@ -34,9 +34,26 @@ class GameModel:
         """
         if not self.es_movimiento_valido(fila, columna):
             return False
+        print("[MODELO] El jugador {} ocupa la casilla ({}, {})"
+              .format(self.jugador_actual, fila, columna))
         self.tablero[fila][columna] = self.jugador_actual
         self.jugador_actual = self._oponente(self.jugador_actual)
+        print("[MODELO] Estado de la matriz:")
+        print(self)
+        print("[MODELO] Ahora es turno de {}".format(self.jugador_actual))
         return True
+
+    def __str__(self):
+        """Representacion en texto de la matriz, util para depurar.
+
+        Las casillas vacias se dibujan con un punto para que se
+        distingan de las fichas.
+        """
+        lineas = []
+        for fila in self.tablero:
+            casillas = [c if c != self.VACIO else "." for c in fila]
+            lineas.append("  " + " | ".join(casillas))
+        return "\n".join(lineas)
 
     def deshacer_movimiento(self, fila, columna):
         """Libera una casilla y devuelve el turno al jugador anterior.

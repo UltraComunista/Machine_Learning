@@ -9,6 +9,8 @@ def main():
     modelo = GameModel()
     vista = GameView()
     controlador = GameController(modelo, vista)
+    # La vista usa al controlador para avisar cuando el usuario hace clic
+    vista.controlador = controlador
     controlador.iniciar()
 
 

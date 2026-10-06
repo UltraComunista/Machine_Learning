@@ -21,3 +21,6 @@ data/*.csv
 # Archivos de árboles de decisión exportados
 *.dot
 *.png
+
+# Apuntes personales de estudio
+APUNTES.md

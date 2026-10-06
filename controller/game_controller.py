@@ -13,11 +13,8 @@ class GameController:
     def __init__(self, modelo, vista):
         self.modelo = modelo
         self.vista = vista
-
-        # La vista no conoce al controlador: solo le pasamos callbacks
-        vista.on_celda_click = self.manejar_clic_celda
-        vista.on_reiniciar = self.manejar_reinicio
-        vista.on_cambio_modo = self.manejar_cambio_modo
+        # La vista avisa los clics llamando a los metodos de este
+        # controlador; main.py le asigna la referencia (vista.controlador)
 
     def iniciar(self):
         """Pinta el estado inicial y arranca el ciclo de la interfaz."""
@@ -26,10 +23,16 @@ class GameController:
 
     def manejar_clic_celda(self, fila, columna):
         """Procesa el click del usuario sobre una casilla del tablero."""
+        print("[CONTROLADOR] Recibida la jugada ({}, {})"
+              .format(fila, columna))
         if self.modelo.juego_terminado():
+            print("[CONTROLADOR] La partida ya termino, se ignora")
             return
         if self.modelo.hacer_movimiento(fila, columna):
+            print("[CONTROLADOR] Movimiento valido, se actualiza la vista")
             self._actualizar_vista()
+        else:
+            print("[CONTROLADOR] Movimiento invalido, se ignora")
 
     def manejar_reinicio(self):
         """Devuelve el juego al estado inicial."""

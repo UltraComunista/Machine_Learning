@@ -25,6 +25,7 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
         self.vista.pantalla = "juego"
         self.modelo = GameModel()
         self.controlador = GameController(self.modelo, self.vista)
+        self.vista.controlador = self.controlador
 
     def tearDown(self):
         pygame.display.quit()
