@@ -52,14 +52,17 @@ class GameController:
         """Refleja el estado del modelo en la interfaz."""
         self.vista.actualizar_tablero(self.modelo.tablero)
         if self.modelo.hay_ganador(self.modelo.JUGADOR_X):
+            print("[CONTROLADOR] X tiene tres en linea, gana la partida")
             self.vista.resaltar_celdas(
                 self.modelo.linea_ganadora(self.modelo.JUGADOR_X))
             self.vista.mostrar_ganador(self.modelo.JUGADOR_X)
         elif self.modelo.hay_ganador(self.modelo.JUGADOR_O):
+            print("[CONTROLADOR] O tiene tres en linea, gana la partida")
             self.vista.resaltar_celdas(
                 self.modelo.linea_ganadora(self.modelo.JUGADOR_O))
             self.vista.mostrar_ganador(self.modelo.JUGADOR_O)
         elif self.modelo.hay_empate():
+            print("[CONTROLADOR] Tablero lleno sin ganador, empate")
             self.vista.mostrar_empate()
         else:
             self.vista.mostrar_turno(self.modelo.jugador_actual)
