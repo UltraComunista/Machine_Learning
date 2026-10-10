@@ -107,11 +107,29 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
         self.assertEqual(self.vista.pantalla, "juego")
         self.assertEqual(self.modelo.tablero[0][0], " ")
 
-    def test_modo_minimax_bloqueado_muestra_aviso(self):
+    def test_modo_minimax_en_el_menu(self):
         self.vista.pantalla = "menu"
-        self.vista._manejar_click(self.boton("aviso_minimax")["rect"].center)
-        self.assertEqual(self.vista.aviso, "Disponible en la semana 2")
-        self.assertEqual(self.vista.obtener_modo(), GameView.MODO_HUMANO)
+        self.vista._manejar_click(self.boton("jugar_minimax")["rect"].center)
+        self.assertEqual(self.vista.pantalla, "juego")
+        self.assertEqual(self.vista.obtener_modo(), GameView.MODO_MINIMAX)
+
+    def test_modo_minimax_la_ia_responde_la_jugada(self):
+        self.vista.modo = GameView.MODO_MINIMAX
+        self.controlador.manejar_clic_celda(1, 1)
+        # El humano (X) jugó y la IA (O) respondió: 2 fichas en total
+        fichas = sum(1 for f in range(3) for c in range(3)
+                     if self.modelo.tablero[f][c] != " ")
+        self.assertEqual(fichas, 2)
+        # Las métricas de Minimax quedaron visibles en la interfaz
+        self.assertIsNotNone(self.vista.nodos)
+        self.assertIsNotNone(self.vista.tiempo_ms)
+
+    def test_modo_humano_la_ia_no_responde(self):
+        self.controlador.manejar_clic_celda(1, 1)
+        fichas = sum(1 for f in range(3) for c in range(3)
+                     if self.modelo.tablero[f][c] != " ")
+        self.assertEqual(fichas, 1)
+        self.assertIsNone(self.vista.nodos)
 
     def test_modo_ml_bloqueado_muestra_aviso(self):
         self.vista.pantalla = "menu"
