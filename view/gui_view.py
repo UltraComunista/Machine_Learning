@@ -409,13 +409,20 @@ class GameView:
                                           self.TEXTO_APAGADO)
         self.ventana.blit(modo, (self.PANEL_X + 20, 24))
 
-        estado = self.fuente_grande.render(self.texto_estado, True, self.TEXTO)
+        estado = self.fuente_grande.render(self.texto_estado, True,
+                                           self.TEXTO)
         self.ventana.blit(estado, (self.PANEL_X + 20, 60))
 
         self._dibujar_metricas()
 
         for boton in self.botones_juego:
             self._dibujar_boton(boton)
+
+    def _formatear_tiempo(self, milisegundos):
+        """Muestra el tiempo en segundos si tardo mas de un segundo."""
+        if milisegundos >= 1000:
+            return "{:.2f} s".format(milisegundos / 1000)
+        return "{:.2f} ms".format(milisegundos)
 
     def _dibujar_metricas(self):
         y = 150
@@ -424,7 +431,7 @@ class GameView:
                          (self.ANCHO - 20, y - 12), 2)
         nodos = "-" if self.nodos is None else str(self.nodos)
         tiempo = "-" if self.tiempo_ms is None \
-            else "{:.2f} ms".format(self.tiempo_ms)
+            else self._formatear_tiempo(self.tiempo_ms)
         for etiqueta in ("Nodos: " + nodos, "Tiempo: " + tiempo):
             superficie = self.fuente.render(etiqueta, True, self.TEXTO)
             self.ventana.blit(superficie, (self.PANEL_X + 20, y))

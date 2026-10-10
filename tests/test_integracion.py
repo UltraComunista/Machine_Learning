@@ -144,6 +144,22 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
         self.assertFalse(self.vista.partida_terminada)
         self.assertEqual(self.modelo.tablero[0][0], " ")
 
+    def test_partida_completa_contra_la_ia_por_el_controlador(self):
+        # El humano intenta ganar por la fila de arriba; la IA debe
+        # responder cada jugada y la partida no puede terminar con
+        # victoria del humano
+        self.vista.modo = GameView.MODO_MINIMAX
+        intentos_humano = [(0, 0), (0, 1), (0, 2), (1, 0), (2, 0)]
+        for fila, columna in intentos_humano:
+            if self.modelo.juego_terminado():
+                break
+            self.controlador.manejar_clic_celda(fila, columna)
+        self.assertTrue(self.modelo.juego_terminado())
+        self.assertFalse(self.modelo.hay_ganador("X"))
+        # Las metricas de la ultima jugada de la IA quedaron en la vista
+        self.assertIsNotNone(self.vista.nodos)
+        self.assertIsNotNone(self.vista.tiempo_ms)
+
 
 if __name__ == "__main__":
     unittest.main()

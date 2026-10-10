@@ -45,18 +45,18 @@ License 1.1.
 ## Plan de trabajo
 
 **Semana 1 — Lógica del juego, MVC e interfaz gráfica**
-- Día 1: estructura del repositorio y carpetas MVC
-- Día 2: implementación del tablero y las reglas (`game_model.py`)
-- Día 3: interfaz gráfica (`gui_view.py`)
-- Día 4: controlador y eventos (`game_controller.py`)
-- Día 5: pruebas del modo Humano vs. Humano
+- Día 1: estructura del repositorio y carpetas MVC ✔
+- Día 2: implementación del tablero y las reglas (`game_model.py`) ✔
+- Día 3: interfaz gráfica (`gui_view.py`) ✔
+- Día 4: controlador y eventos (`game_controller.py`) ✔
+- Día 5: pruebas del modo Humano vs. Humano ✔
 
 **Semana 2 — Árboles, backtracking y Minimax**
-- Día 1: espacios de estados y mecanismo de backtracking
-- Día 2: función de evaluación heurística
-- Día 3: algoritmo Minimax recursivo con contador de nodos
-- Día 4: integración del agente Minimax al controlador
-- Día 5: métricas en la interfaz (nodos explorados y tiempo de respuesta)
+- Día 1: espacios de estados y mecanismo de backtracking ✔
+- Día 2: función de evaluación heurística ✔
+- Día 3: algoritmo Minimax recursivo con contador de nodos ✔
+- Día 4: integración del agente Minimax al controlador ✔
+- Día 5: métricas en la interfaz (nodos explorados y tiempo de respuesta) ✔
 
 **Semana 3 — Dataset y Machine Learning**
 - Día 1: simulación de partidas para generar el dataset
