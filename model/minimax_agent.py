@@ -84,6 +84,7 @@ class MinimaxAgent:
         Explora cada movimiento disponible con Minimax y se queda con
         el de mayor puntaje. Reinicia el contador de nodos para que
         la interfaz muestre cuantos se visitaron en esta jugada.
+        Debe llamarse cuando es el turno de la IA en el modelo.
         """
         self.nodos_evaluados = 0
         mejor_puntaje = float("-inf")

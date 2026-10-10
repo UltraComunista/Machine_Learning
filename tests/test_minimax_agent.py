@@ -53,10 +53,11 @@ class TestMinimaxRecursivo(unittest.TestCase):
             modelo.hacer_movimiento(fila, columna)
 
     def test_elige_la_victoria_inmediata(self):
-        # O tiene (1,1) y (1,0): debe completar la fila 1 en (1,2),
-        # aunque X tambien amenace en (0,2); ganar va primero
+        # Es turno de O y tiene (1,0) y (1,1): debe completar la fila
+        # 1 en (1,2), aunque X tambien amenace en (0,2); ganar va
+        # antes que bloquear
         modelo = GameModel()
-        self.jugar(modelo, [(0, 0), (1, 1), (0, 1), (1, 0)])
+        self.jugar(modelo, [(0, 0), (1, 1), (0, 1), (1, 0), (2, 2)])
         self.assertEqual(self.agente.mejor_jugada(modelo), (1, 2))
 
     def test_bloquea_la_victoria_del_humano(self):
