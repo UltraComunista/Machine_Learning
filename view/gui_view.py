@@ -192,8 +192,6 @@ class GameView:
             return
         celda = self._celda_en_posicion(pos)
         if celda is not None and self.controlador is not None:
-            print("[VISTA] Clic en la celda {} -> aviso al controlador"
-                  .format(celda))
             self.controlador.manejar_clic_celda(*celda)
 
     def _click_en_botones(self, botones, pos):
@@ -297,11 +295,6 @@ class GameView:
         x = (self.ANCHO - titulo.get_width()) // 2
         # self.ventana.blit(sombra, (x + 4, 108))
         self.ventana.blit(titulo, (x, 100))
-
-        subtitulo = self.fuente.render(
-            "El clasico juego de estrategia", True, self.TEXTO)
-        self.ventana.blit(
-            subtitulo, ((self.ANCHO - subtitulo.get_width()) // 2, 165))
 
         for boton in self.botones_menu:
             self._dibujar_boton(boton)

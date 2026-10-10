@@ -23,16 +23,10 @@ class GameController:
 
     def manejar_clic_celda(self, fila, columna):
         """Procesa el click del usuario sobre una casilla del tablero."""
-        print("[CONTROLADOR] Recibida la jugada ({}, {})"
-              .format(fila, columna))
         if self.modelo.juego_terminado():
-            print("[CONTROLADOR] La partida ya termino, se ignora")
             return
         if self.modelo.hacer_movimiento(fila, columna):
-            print("[CONTROLADOR] Movimiento valido, se actualiza la vista")
             self._actualizar_vista()
-        else:
-            print("[CONTROLADOR] Movimiento invalido, se ignora")
 
     def manejar_reinicio(self):
         """Devuelve el juego al estado inicial."""
@@ -52,17 +46,14 @@ class GameController:
         """Refleja el estado del modelo en la interfaz."""
         self.vista.actualizar_tablero(self.modelo.tablero)
         if self.modelo.hay_ganador(self.modelo.JUGADOR_X):
-            print("[CONTROLADOR] X tiene tres en linea, gana la partida")
             self.vista.resaltar_celdas(
                 self.modelo.linea_ganadora(self.modelo.JUGADOR_X))
             self.vista.mostrar_ganador(self.modelo.JUGADOR_X)
         elif self.modelo.hay_ganador(self.modelo.JUGADOR_O):
-            print("[CONTROLADOR] O tiene tres en linea, gana la partida")
             self.vista.resaltar_celdas(
                 self.modelo.linea_ganadora(self.modelo.JUGADOR_O))
             self.vista.mostrar_ganador(self.modelo.JUGADOR_O)
         elif self.modelo.hay_empate():
-            print("[CONTROLADOR] Tablero lleno sin ganador, empate")
             self.vista.mostrar_empate()
         else:
             self.vista.mostrar_turno(self.modelo.jugador_actual)

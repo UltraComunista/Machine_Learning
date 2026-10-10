@@ -34,13 +34,8 @@ class GameModel:
         """
         if not self.es_movimiento_valido(fila, columna):
             return False
-        print("[MODELO] El jugador {} ocupa la casilla ({}, {})"
-              .format(self.jugador_actual, fila, columna))
         self.tablero[fila][columna] = self.jugador_actual
         self.jugador_actual = self._oponente(self.jugador_actual)
-        print("[MODELO] Estado de la matriz:")
-        print(self)
-        print("[MODELO] Ahora es turno de {}".format(self.jugador_actual))
         return True
 
     def __str__(self):
