@@ -24,3 +24,6 @@ data/*.csv
 
 # Apuntes personales de estudio
 APUNTES.md
+
+# Guia de estudio en PDF
+guia_minimax.pdf
