@@ -25,6 +25,8 @@ que eligio la IA, numerada del 0 al 8.
 import random
 
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
 
 from model.game_model import GameModel
 from model.minimax_agent import MinimaxAgent
@@ -101,6 +103,61 @@ def guardar_dataset(tabla, ruta):
     entrena, cada columna debe tener nombre para saber cual es cual.
     """
     tabla.to_csv(ruta, index=False)
+
+
+def cargar_dataset(ruta):
+    """Lee un CSV del dataset y lo devuelve como DataFrame."""
+    return pd.read_csv(ruta)
+
+
+def entrenar_arbol(tabla, semilla=42):
+    """Entrena un arbol de decision y devuelve (arbol, precision).
+
+    Separa el dataset en 80% para entrenar y 20% para probar. La
+    precision es la proporcion de jugadas del 20% de prueba que el
+    arbol acierta. La semilla fija hace que la separacion sea la
+    misma en cada ejecucion.
+    """
+    caracteristicas = tabla[NOMBRES_CARACTERISTICAS]
+    etiquetas = tabla[NOMBRE_ETIQUETA]
+    x_entrena, x_prueba, y_entrena, y_prueba = train_test_split(
+        caracteristicas, etiquetas,
+        test_size=0.2, random_state=semilla)
+    arbol = DecisionTreeClassifier(random_state=semilla)
+    arbol.fit(x_entrena, y_entrena)
+    precision = arbol.score(x_prueba, y_prueba)
+    return arbol, precision
+
+
+class AgenteArbol:
+    """Envuelve el arbol entrenado con la misma interfaz que MinimaxAgent.
+
+    MinimaxAgent explora el arbol de jugadas recursivamente; este
+    agente solo le pregunta al arbol de decision entrenado y obtiene
+    la jugada de inmediato, sin buscar nada.
+    """
+
+    def __init__(self, arbol, jugador_ia=GameModel.JUGADOR_O):
+        self.arbol = arbol
+        self.jugador_ia = jugador_ia
+        self.nodos_evaluados = 0
+
+    def predecir_jugada(self, tablero):
+        """Devuelve la casilla elegida (numero del 0 al 8) para un
+        tablero dado. Se pasa un DataFrame con nombres de columna
+        para que sklearn no lance advertencias."""
+        estado = codificar_tablero(tablero)
+        consulta = pd.DataFrame([estado], columns=NOMBRES_CARACTERISTICAS)
+        return int(self.arbol.predict(consulta)[0])
+
+    def mejor_jugada(self, modelo):
+        """Devuelve la casilla (fila, columna) que propone el arbol.
+
+        Recibe el GameModel igual que MinimaxAgent, asi el
+        controlador puede usar cualquiera de los dos sin cambios.
+        """
+        numero = self.predecir_jugada(modelo.tablero)
+        return (numero // 3, numero % 3)
 
 
 class GeneradorDatos:

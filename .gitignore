@@ -23,6 +23,8 @@ data/*.csv
 # Archivos de árboles de decisión exportados
 *.dot
 *.png
+# ...excepto la figura del árbol del proyecto, que se entrega
+!data/arbol.png
 
 # Apuntes personales de estudio
 APUNTES.md

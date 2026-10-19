@@ -5,14 +5,19 @@ import tempfile
 import unittest
 
 from model.ml_agent import (
+    AgenteArbol,
     GeneradorDatos,
     casilla_a_numero,
     construir_dataset,
+    cargar_dataset,
     codificar_tablero,
+    entrenar_arbol,
     guardar_dataset,
     validar_dataset,
 )
 from model.game_model import GameModel
+
+RUTA_DATASET = os.path.join("data", "partidas.csv")
 
 
 class TestCodificacion(unittest.TestCase):
@@ -121,6 +126,43 @@ class TestDataset(unittest.TestCase):
         self.assertEqual(lineas[0],
                          "c0,c1,c2,c3,c4,c5,c6,c7,c8,jugada")
         self.assertEqual(len(lineas), len(self.datos) + 1)
+
+
+class TestArbolDecision(unittest.TestCase):
+    """Verifica el entrenamiento y las predicciones del arbol."""
+
+    @classmethod
+    def setUpClass(cls):
+        # Se entrena una sola vez para toda la clase: el entrenamiento
+        # es rapido, pero no hace falta repetirlo en cada prueba.
+        cls.tabla = cargar_dataset(RUTA_DATASET)
+        cls.arbol, cls.precision = entrenar_arbol(cls.tabla)
+        cls.agente = AgenteArbol(cls.arbol)
+
+    def test_cargar_dataset_lee_el_csv_del_proyecto(self):
+        self.assertEqual(len(self.tabla), 6844)
+        self.assertEqual(list(self.tabla.columns),
+                         ["c0", "c1", "c2", "c3", "c4",
+                          "c5", "c6", "c7", "c8", "jugada"])
+
+    def test_la_precision_es_alta(self):
+        # El arbol debe acertar la gran mayoria de las jugadas de
+        # Minimax que no vio durante el entrenamiento.
+        self.assertGreater(self.precision, 0.75)
+
+    def test_la_prediccion_devuelve_una_casilla_valida(self):
+        modelo = GameModel()
+        modelo.hacer_movimiento(0, 0)  # mueve X, turno de la IA
+        jugada = self.agente.predecir_jugada(modelo.tablero)
+        self.assertTrue(0 <= jugada <= 8)
+
+    def test_mejor_jugada_devuelve_una_casilla_libre(self):
+        # Misma interfaz que MinimaxAgent: recibe el modelo y
+        # devuelve (fila, columna) de una casilla disponible.
+        modelo = GameModel()
+        modelo.hacer_movimiento(1, 1)
+        fila, columna = self.agente.mejor_jugada(modelo)
+        self.assertTrue(modelo.es_movimiento_valido(fila, columna))
 
 
 if __name__ == "__main__":
