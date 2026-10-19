@@ -8,6 +8,8 @@ cada agente, y en cuantas jugadas coinciden. Tambien muestra:
 - Las preguntas que el arbol de decision se hace para elegir jugada
   en un tablero de ejemplo (las reglas aprendidas, en texto).
 
+Para ver la traza paso a paso con pausas, usar tools/sesion_debug.py.
+
 Uso:
     python3.13 tools/comparar_agentes.py
 """
@@ -25,7 +27,6 @@ from model.minimax_agent import MinimaxAgent  # noqa: E402
 from model.ml_agent import (  # noqa: E402
     AgenteArbol,
     cargar_dataset,
-    codificar_tablero,
     entrenar_arbol,
 )
 
@@ -54,33 +55,6 @@ def posicion_aleatoria(azar):
         fila, columna = agente.mejor_jugada(modelo)
         modelo.hacer_movimiento(fila, columna)
     return None
-
-
-def explicar_jugada_arbol(arbol, tablero):
-    """Imprime las preguntas (reglas) que el arbol se hace para un
-    tablero y la jugada final que decide.
-
-    Baja nodo a nodo por decision_path: cada nodo es una pregunta
-    del tipo "¿c4 <= 0.5?" (¿esta libre el centro?) y la hoja dice
-    la clase, es decir, la casilla donde jugar.
-    """
-    estado = codificar_tablero(tablero)
-    nodo = 0
-    print("  Preguntas del arbol para este tablero:")
-    while arbol.tree_.children_left[nodo] != -1:
-        casilla = arbol.tree_.feature[nodo]
-        umbral = arbol.tree_.threshold[nodo]
-        if estado[casilla] <= umbral:
-            print("    ¿c{} <= {:.1f}? c{}={} -> si".format(
-                casilla, umbral, casilla, estado[casilla]))
-            nodo = arbol.tree_.children_left[nodo]
-        else:
-            print("    ¿c{} <= {:.1f}? c{}={} -> no".format(
-                casilla, umbral, casilla, estado[casilla]))
-            nodo = arbol.tree_.children_right[nodo]
-    jugada = int(arbol.classes_[arbol.tree_.value[nodo].argmax()])
-    print("    -> jugar en la casilla {}".format(jugada))
-    return jugada
 
 
 def demo_traza_minimax():
@@ -112,9 +86,11 @@ def demo_reglas_arbol(agente_ml):
         modelo.hacer_movimiento(fila, columna)
     print("Mismo tablero que arriba:")
     print(modelo)
-    jugada = explicar_jugada_arbol(agente_ml.arbol, modelo.tablero)
-    agente_ml.nodos_evaluados = 0
-    print("  Jugada final del arbol: la casilla {}".format(jugada))
+    jugada, reglas = agente_ml.explicar_jugada(modelo.tablero)
+    print("  Preguntas del arbol para este tablero:")
+    for regla in reglas:
+        print("   " + regla)
+    print("    -> jugar en la casilla {}".format(jugada))
 
 
 def comparacion(agente_ml):

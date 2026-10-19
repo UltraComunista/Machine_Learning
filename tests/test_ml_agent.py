@@ -164,6 +164,14 @@ class TestArbolDecision(unittest.TestCase):
         fila, columna = self.agente.mejor_jugada(modelo)
         self.assertTrue(modelo.es_movimiento_valido(fila, columna))
 
+    def test_explicar_jugada_devuelve_las_reglas_usadas(self):
+        modelo = GameModel()
+        modelo.hacer_movimiento(0, 0)
+        jugada, reglas = self.agente.explicar_jugada(modelo.tablero)
+        self.assertTrue(0 <= jugada <= 8)
+        self.assertTrue(reglas)
+        self.assertIn("c", reglas[0])
+
 
 if __name__ == "__main__":
     unittest.main()

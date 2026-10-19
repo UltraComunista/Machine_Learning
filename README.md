@@ -85,15 +85,31 @@ sea la misma.
 
 Herramientas de análisis del repositorio:
 
+- `tools/sesion_debug.py` — **sesión de debugging interactiva**: juegas
+  contra Minimax desde una posición con pocas casillas libres y su
+  razonamiento se imprime **paso a paso con pausas** (parámetro
+  `demora`), viendo el backtracking en tiempo real; al final compara
+  con las reglas que usaría el árbol de ML para el mismo tablero.
 - `tools/comparar_agentes.py` — imprime la **traza de backtracking**
   de Minimax en una posición pequeña, las **reglas que el árbol se
-  pregunta** para decidir (`export_text` / recorrido del árbol) y la
-  comparativa de tiempos y nodos.
+  pregunta** para decidir y la comparativa de tiempos y nodos.
 - `tools/entrenar_arbol.py` — entrena el árbol y exporta su
-  estructura completa en `data/arbol.txt` y `data/arbol.png`.
-- `MinimaxAgent.mejor_jugada(modelo, traza=True)` — activa la traza
-  de llamadas recursivas en consola para ver el backtracking en
-  tiempo real.
+  estructura completa en `data/arbol.txt` (salida de
+  `sklearn.tree.export_text`) y `data/arbol.png`.
+- `MinimaxAgent.mejor_jugada(modelo, traza=True, demora=0.5)` —
+  activa la traza de llamadas recursivas con pausa entre pasos.
+
+## ¿Se le puede ganar a la IA?
+
+- **Minimax: no.** Juega perfecto; lo mejor que se puede lograr
+  contra ella es un empate.
+- **Machine Learning: en la práctica, tampoco.** La IA de ML solo
+  juega con O (segunda ficha), y el mejor resultado posible con O
+  contra un X perfecto es el empate. En la prueba del proyecto,
+  Minimax jugando X perfecto no logró ganarle ni una de las 65
+  partidas: todas terminaron en empate. El 10% de jugadas distintas
+  que observamos en la comparativa eran casi siempre entre movidas
+  igual de buenas, no errores que se puedan aprovechar.
 
 ## Instalación
 

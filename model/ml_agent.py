@@ -163,6 +163,33 @@ class AgenteArbol:
         numero = self.predecir_jugada(modelo.tablero)
         return (numero // 3, numero % 3)
 
+    def explicar_jugada(self, tablero):
+        """Devuelve (jugada, reglas) para un tablero: la casilla que
+        elegiria y las preguntas que se hizo para decidir.
+
+        Cada regla es un nodo del arbol: una pregunta del tipo
+        "¿c4 <= 0.5?" (¿esta libre el centro?) con la respuesta que
+        tomo para ese tablero. Es lo mismo que se ve en el texto de
+        sklearn.tree.export_text, pero solo con la rama que se usa.
+        """
+        estado = codificar_tablero(tablero)
+        nodo = 0
+        reglas = []
+        while self.arbol.tree_.children_left[nodo] != -1:
+            casilla = self.arbol.tree_.feature[nodo]
+            umbral = self.arbol.tree_.threshold[nodo]
+            if estado[casilla] <= umbral:
+                respuesta = "si"
+                nodo = self.arbol.tree_.children_left[nodo]
+            else:
+                respuesta = "no"
+                nodo = self.arbol.tree_.children_right[nodo]
+            reglas.append("¿c{} <= {:.1f}? c{}={} -> {}".format(
+                casilla, umbral, casilla, estado[casilla], respuesta))
+        jugada = int(self.arbol.classes_[
+            self.arbol.tree_.value[nodo].argmax()])
+        return jugada, reglas
+
 
 class GeneradorDatos:
     """Simula partidas y registra las jugadas de la IA como datos.
