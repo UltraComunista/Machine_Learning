@@ -40,12 +40,8 @@ class GameController:
         """Carga el dataset y entrena el arbol la primera vez que se
         necesita; despues reutiliza el mismo agente entrenado."""
         if self._agente_ml is None:
-            print("[CONTROLADOR] Entrenando el arbol de ML "
-                  "(solo la primera vez)...")
             tabla = cargar_dataset(RUTA_DATASET)
-            arbol, precision = entrenar_arbol(tabla)
-            print("[CONTROLADOR] Arbol entrenado con precision "
-                  "{:.1%}".format(precision))
+            arbol, _ = entrenar_arbol(tabla)
             self._agente_ml = AgenteArbol(arbol)
         return self._agente_ml
 
@@ -85,32 +81,22 @@ class GameController:
         para mostrarlo en las metricas de la interfaz.
         """
         modo = self.vista.obtener_modo()
-        print("[CONTROLADOR] Turno de la IA, modo actual: " + modo)
         if modo == GameView.MODO_MINIMAX:
             agente = self.agente_minimax
         elif modo == GameView.MODO_ML:
             agente = self._obtener_agente_ml()
         else:
-            print("[CONTROLADOR] El modo no usa IA, la IA no juega")
             return
         if self.modelo.juego_terminado():
-            print("[CONTROLADOR] La partida termino, la IA no juega")
             return
-        print("[CONTROLADOR] La IA empieza a pensar...")
         inicio = time.perf_counter()
         fila, columna = agente.mejor_jugada(self.modelo)
         milisegundos = (time.perf_counter() - inicio) * 1000
         if not self.modelo.es_movimiento_valido(fila, columna):
             # El arbol de ML puede proponer una casilla ya ocupada en
             # estados que vio pocas veces; se juega la primera libre.
-            print("[CONTROLADOR] La IA propuso una casilla ocupada, "
-                  "se usa la primera libre")
             fila, columna = self.modelo.obtener_movimientos_disponibles()[0]
-        print("[CONTROLADOR] La IA eligio la casilla ({}, {})"
-              .format(fila, columna))
         self.modelo.hacer_movimiento(fila, columna)
-        print("[CONTROLADOR] Exploro {} nodos en {:.2f} ms"
-              .format(agente.nodos_evaluados, milisegundos))
         self.vista.mostrar_metricas(
             nodos=agente.nodos_evaluados,
             tiempo_ms=milisegundos)

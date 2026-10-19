@@ -219,14 +219,11 @@ class GameView:
             if self.controlador is not None:
                 self.controlador.manejar_cambio_modo()
         elif accion == "jugar_minimax":
-            print("[VISTA] Modo seleccionado: Humano vs. IA Minimax")
             self.pantalla = "juego"
             self.modo = self.MODO_MINIMAX
             if self.controlador is not None:
                 self.controlador.manejar_cambio_modo()
         elif accion == "jugar_ml":
-            print("[VISTA] Modo seleccionado: "
-                  "Humano vs. IA Machine Learning")
             self.pantalla = "juego"
             self.modo = self.MODO_ML
             if self.controlador is not None:
