@@ -42,12 +42,16 @@ class MinimaxAgent:
             return self.PUNTAJE_DERROTA
         return self.PUNTAJE_EMPATE
 
-    def minimax(self, modelo, profundidad, maximizando):
+    def minimax(self, modelo, profundidad, maximizando, traza=False):
         """Devuelve el mejor puntaje alcanzable desde este estado.
 
         Llega a las hojas del arbol (partidas terminadas) con
         backtracking y propaga los puntajes: el nivel de la IA toma
         el maximo y el nivel del humano el minimo.
+
+        Con traza=True imprime cada movimiento que prueba y deshace,
+        con sangria segun la profundidad, para ver el backtracking
+        en consola en tiempo real.
         """
         self.nodos_evaluados += 1
         puntaje = self.evaluar(modelo)
@@ -61,37 +65,54 @@ class MinimaxAgent:
         if not modelo.obtener_movimientos_disponibles():
             return self.PUNTAJE_EMPATE
 
+        sangria = "  " * profundidad
         if maximizando:
             mejor = float("-inf")
             for fila, columna in modelo.obtener_movimientos_disponibles():
+                if traza:
+                    print("{}pruebo ({}, {}) turno de la IA".format(
+                        sangria, fila, columna))
                 modelo.hacer_movimiento(fila, columna)
-                puntaje_hijo = self.minimax(modelo, profundidad + 1, False)
+                puntaje_hijo = self.minimax(
+                    modelo, profundidad + 1, False, traza)
                 modelo.deshacer_movimiento(fila, columna)
+                if traza:
+                    print("{}deshago ({}, {}) -> puntaje {}".format(
+                        sangria, fila, columna, puntaje_hijo))
                 mejor = max(puntaje_hijo, mejor)
             return mejor
 
         mejor = float("inf")
         for fila, columna in modelo.obtener_movimientos_disponibles():
+            if traza:
+                print("{}pruebo ({}, {}) turno del humano".format(
+                    sangria, fila, columna))
             modelo.hacer_movimiento(fila, columna)
-            puntaje_hijo = self.minimax(modelo, profundidad + 1, True)
+            puntaje_hijo = self.minimax(
+                modelo, profundidad + 1, True, traza)
             modelo.deshacer_movimiento(fila, columna)
+            if traza:
+                print("{}deshago ({}, {}) -> puntaje {}".format(
+                    sangria, fila, columna, puntaje_hijo))
             mejor = min(puntaje_hijo, mejor)
         return mejor
 
-    def mejor_jugada(self, modelo):
+    def mejor_jugada(self, modelo, traza=False):
         """Devuelve la casilla (fila, columna) optima para la IA.
 
         Explora cada movimiento disponible con Minimax y se queda con
         el de mayor puntaje. Reinicia el contador de nodos para que
         la interfaz muestre cuantos se visitaron en esta jugada.
         Debe llamarse cuando es el turno de la IA en el modelo.
+        Con traza=True se imprime el backtracking completo en consola
+        (cuidado: desde el inicio de la partida son miles de lineas).
         """
         self.nodos_evaluados = 0
         mejor_puntaje = float("-inf")
         mejor_movimiento = None
         for fila, columna in modelo.obtener_movimientos_disponibles():
             modelo.hacer_movimiento(fila, columna)
-            puntaje = self.minimax(modelo, 0, False)
+            puntaje = self.minimax(modelo, 0, False, traza)
             modelo.deshacer_movimiento(fila, columna)
             if puntaje > mejor_puntaje:
                 mejor_puntaje = puntaje

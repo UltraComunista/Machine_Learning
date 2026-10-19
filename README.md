@@ -63,7 +63,37 @@ License 1.1.
 - Día 2: limpieza y estructuración del dataset (CSV) ✔
 - Día 3: entrenamiento y visualización del árbol de decisión ✔
 - Día 4: integración del agente ML a la interfaz ✔
-- Día 5: comparativa final (velocidad y precisión) y presentación
+- Día 5: comparativa final (velocidad y precisión) y presentación ✔
+
+## Comparativa final: Minimax vs. Machine Learning
+
+Medición real sobre 50 posiciones de juego generadas al azar
+(`python3.13 tools/comparar_agentes.py`, semilla 7):
+
+| Métrica | Minimax | Árbol de decisión |
+|---|---|---|
+| Jugadas idénticas | 45/50 (90%) | 45/50 (90%) |
+| Tiempo por jugada | ~284 ms | ~1.2 ms |
+| Nodos revisados por jugada | ~42,000 | ~6.5 |
+
+El árbol de decisión es unas **230 veces más rápido** y revisa miles
+de veces menos nodos, a cambio de no coincidir exactamente en el 10%
+de las posiciones. Ese 10% se da casi siempre cuando varias jugadas
+son igual de buenas (empatan en puntaje) y cada agente elige una
+distinta: la calidad de juego es equivalente, aunque la casilla no
+sea la misma.
+
+Herramientas de análisis del repositorio:
+
+- `tools/comparar_agentes.py` — imprime la **traza de backtracking**
+  de Minimax en una posición pequeña, las **reglas que el árbol se
+  pregunta** para decidir (`export_text` / recorrido del árbol) y la
+  comparativa de tiempos y nodos.
+- `tools/entrenar_arbol.py` — entrena el árbol y exporta su
+  estructura completa en `data/arbol.txt` y `data/arbol.png`.
+- `MinimaxAgent.mejor_jugada(modelo, traza=True)` — activa la traza
+  de llamadas recursivas en consola para ver el backtracking en
+  tiempo real.
 
 ## Instalación
 

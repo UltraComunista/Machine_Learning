@@ -79,6 +79,24 @@ class TestMinimaxRecursivo(unittest.TestCase):
         self.agente.mejor_jugada(modelo)
         self.assertGreater(self.agente.nodos_evaluados, 0)
 
+    def test_la_traza_imprime_el_backtracking(self):
+        # Con traza=True se ven los "pruebo" y "deshago" en consola y
+        # la jugada elegida es la misma que sin traza.
+        import io
+        from contextlib import redirect_stdout
+
+        modelo = GameModel()
+        self.jugar(modelo, [(0, 0), (1, 1), (0, 1)])
+        esperada = self.agente.mejor_jugada(modelo)
+
+        salida = io.StringIO()
+        with redirect_stdout(salida):
+            jugada = self.agente.mejor_jugada(modelo, traza=True)
+
+        self.assertEqual(jugada, esperada)
+        self.assertIn("pruebo", salida.getvalue())
+        self.assertIn("deshago", salida.getvalue())
+
     def test_el_agente_es_imbatible(self):
         # Contra un jugador aleatorio, la IA nunca pierde
         aleatorio = random.Random(42)
