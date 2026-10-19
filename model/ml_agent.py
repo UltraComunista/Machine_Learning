@@ -24,6 +24,8 @@ que eligio la IA, numerada del 0 al 8.
 
 import random
 
+import pandas as pd
+
 from model.game_model import GameModel
 from model.minimax_agent import MinimaxAgent
 
@@ -51,6 +53,54 @@ def codificar_tablero(tablero):
 def casilla_a_numero(fila, columna):
     """Convierte una casilla (fila, columna) en un numero del 0 al 8."""
     return fila * 3 + columna
+
+
+NOMBRES_CARACTERISTICAS = ["c{}".format(i) for i in range(9)]
+NOMBRE_ETIQUETA = "jugada"
+VALORES_CASILLA = (CODIGO_VACIO, CODIGO_X, CODIGO_O)
+
+
+def construir_dataset(datos):
+    """Convierte la lista de filas en un DataFrame de pandas.
+
+    Las 9 primeras columnas (c0 a c8) son las caracteristicas, es
+    decir el estado del tablero. La ultima (jugada) es la etiqueta,
+    la casilla que Minimax eligio en ese estado.
+    """
+    columnas = NOMBRES_CARACTERISTICAS + [NOMBRE_ETIQUETA]
+    return pd.DataFrame(datos, columns=columnas)
+
+
+def validar_dataset(tabla):
+    """Revisa que el dataset este bien formado y devuelve los problemas.
+
+    Se llama antes de guardar el CSV para descartar filas corruptas:
+    valores fuera de rango, etiquetas imposibles o datos vacios.
+    Si todo esta bien devuelve una lista vacia.
+    """
+    problemas = []
+    if tabla.empty:
+        problemas.append("el dataset esta vacio")
+        return problemas
+    for nombre in NOMBRES_CARACTERISTICAS:
+        valores = set(tabla[nombre].unique())
+        if not valores.issubset(set(VALORES_CASILLA)):
+            problemas.append("la columna {} tiene valores invalidos: {}"
+                             .format(nombre, sorted(valores)))
+    jugadas = set(tabla[NOMBRE_ETIQUETA].unique())
+    if not jugadas.issubset(set(range(9))):
+        problemas.append("hay etiquetas fuera del rango 0-8: {}"
+                         .format(sorted(jugadas)))
+    return problemas
+
+
+def guardar_dataset(tabla, ruta):
+    """Guarda el DataFrame en un archivo CSV con encabezado.
+
+    El encabezado (c0...c8, jugada) es importante: cuando el modelo
+    entrena, cada columna debe tener nombre para saber cual es cual.
+    """
+    tabla.to_csv(ruta, index=False)
 
 
 class GeneradorDatos:

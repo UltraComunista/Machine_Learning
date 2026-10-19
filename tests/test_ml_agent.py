@@ -1,11 +1,16 @@
 """Pruebas del generador de datos para el agente de ML."""
 
+import os
+import tempfile
 import unittest
 
 from model.ml_agent import (
     GeneradorDatos,
     casilla_a_numero,
+    construir_dataset,
     codificar_tablero,
+    guardar_dataset,
+    validar_dataset,
 )
 from model.game_model import GameModel
 
@@ -75,6 +80,47 @@ class TestGeneradorDatos(unittest.TestCase):
         # segundo) y como minimo 1.
         filas, _ = self.generador.simular_partida()
         self.assertTrue(1 <= len(filas) <= 5)
+
+
+class TestDataset(unittest.TestCase):
+    """Verifica la estructura, validacion y guardado del CSV."""
+
+    def setUp(self):
+        self.generador = GeneradorDatos(semilla=7)
+        self.datos, _ = self.generador.generar(3)
+
+    def test_el_dataset_tiene_10_columnas_con_nombre(self):
+        tabla = construir_dataset(self.datos)
+        self.assertEqual(list(tabla.columns),
+                         ["c0", "c1", "c2", "c3", "c4",
+                          "c5", "c6", "c7", "c8", "jugada"])
+
+    def test_el_dataset_generado_no_tiene_problemas(self):
+        tabla = construir_dataset(self.datos)
+        self.assertEqual(validar_dataset(tabla), [])
+
+    def test_detecta_valores_invalidos(self):
+        tabla = construir_dataset([[9] * 9 + [0]])
+        self.assertTrue(validar_dataset(tabla))
+
+    def test_detecta_etiquetas_fuera_de_rango(self):
+        tabla = construir_dataset([[0] * 9 + [12]])
+        self.assertTrue(validar_dataset(tabla))
+
+    def test_detecta_dataset_vacio(self):
+        tabla = construir_dataset([])
+        self.assertTrue(validar_dataset(tabla))
+
+    def test_guardar_dataset_escribe_el_csv_con_encabezado(self):
+        tabla = construir_dataset(self.datos)
+        with tempfile.TemporaryDirectory() as carpeta:
+            ruta = os.path.join(carpeta, "prueba.csv")
+            guardar_dataset(tabla, ruta)
+            with open(ruta) as archivo:
+                lineas = archivo.read().splitlines()
+        self.assertEqual(lineas[0],
+                         "c0,c1,c2,c3,c4,c5,c6,c7,c8,jugada")
+        self.assertEqual(len(lineas), len(self.datos) + 1)
 
 
 if __name__ == "__main__":

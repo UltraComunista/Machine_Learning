@@ -17,6 +17,8 @@ env/
 
 # Datasets generados (se pueden regenerar con las simulaciones)
 data/*.csv
+# ...excepto el dataset final del proyecto, que se entrega
+!data/partidas.csv
 
 # Archivos de árboles de decisión exportados
 *.dot
@@ -24,6 +26,7 @@ data/*.csv
 
 # Apuntes personales de estudio
 APUNTES.md
+SEMANA_3.md
 
 # Guia de estudio en PDF
 guia_minimax.pdf

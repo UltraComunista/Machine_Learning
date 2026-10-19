@@ -60,7 +60,7 @@ License 1.1.
 
 **Semana 3 — Dataset y Machine Learning**
 - Día 1: simulación de partidas para generar el dataset ✔
-- Día 2: limpieza y estructuración del dataset (CSV)
+- Día 2: limpieza y estructuración del dataset (CSV) ✔
 - Día 3: entrenamiento y visualización del árbol de decisión
 - Día 4: integración del agente ML a la interfaz
 - Día 5: comparativa final (velocidad y precisión) y presentación
