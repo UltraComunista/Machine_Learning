@@ -134,7 +134,7 @@ class GameView:
              "accion": "jugar_minimax", "habilitado": True},
             {"rect": pygame.Rect(x, 360, ancho, alto),
              "texto": "Humano vs. IA Machine Learning",
-             "accion": "aviso_ml", "habilitado": False},
+             "accion": "jugar_ml", "habilitado": True},
             {"rect": pygame.Rect(x, 445, ancho, alto),
              "texto": "Salir",
              "accion": "salir", "habilitado": True, "salir": True},
@@ -219,8 +219,16 @@ class GameView:
             if self.controlador is not None:
                 self.controlador.manejar_cambio_modo()
         elif accion == "jugar_minimax":
+            print("[VISTA] Modo seleccionado: Humano vs. IA Minimax")
             self.pantalla = "juego"
             self.modo = self.MODO_MINIMAX
+            if self.controlador is not None:
+                self.controlador.manejar_cambio_modo()
+        elif accion == "jugar_ml":
+            print("[VISTA] Modo seleccionado: "
+                  "Humano vs. IA Machine Learning")
+            self.pantalla = "juego"
+            self.modo = self.MODO_ML
             if self.controlador is not None:
                 self.controlador.manejar_cambio_modo()
 

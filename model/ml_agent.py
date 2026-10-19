@@ -145,9 +145,13 @@ class AgenteArbol:
     def predecir_jugada(self, tablero):
         """Devuelve la casilla elegida (numero del 0 al 8) para un
         tablero dado. Se pasa un DataFrame con nombres de columna
-        para que sklearn no lance advertencias."""
+        para que sklearn no lance advertencias. Cuenta cuantos nodos
+        del arbol recorrio la prediccion para poder comparar con los
+        miles de nodos que explora Minimax."""
         estado = codificar_tablero(tablero)
         consulta = pd.DataFrame([estado], columns=NOMBRES_CARACTERISTICAS)
+        ruta = self.arbol.decision_path(consulta)
+        self.nodos_evaluados = int(ruta.sum())
         return int(self.arbol.predict(consulta)[0])
 
     def mejor_jugada(self, modelo):

@@ -1,10 +1,17 @@
 """Controlador: sincroniza la interacción del usuario con el modelo
 y la vista."""
 
+import os
 import time
 
 from model.minimax_agent import MinimaxAgent
+from model.ml_agent import AgenteArbol, cargar_dataset, entrenar_arbol
 from view.gui_view import GameView
+
+# Ruta al dataset, calculada desde la ubicacion de este archivo para
+# que funcione aunque se ejecute desde otra carpeta.
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RUTA_DATASET = os.path.join(RAIZ, "data", "partidas.csv")
 
 
 class GameController:
@@ -13,16 +20,34 @@ class GameController:
     Recibe los eventos de la interfaz (clics en casillas, reinicio,
     cambio de modo), los traduce en operaciones sobre el modelo y le
     devuelve a la vista el estado actualizado para que lo pinte.
-    En el modo contra la IA, despues de cada jugada humana le pide
-    la respuesta al agente Minimax y registra sus metricas.
+    En los modos contra la IA, despues de cada jugada humana le pide
+    la respuesta al agente del modo (Minimax o ML) y registra sus
+    metricas.
     """
 
     def __init__(self, modelo, vista):
         self.modelo = modelo
         self.vista = vista
         self.agente_minimax = MinimaxAgent()
+        # El agente de ML se crea perezoso: entrenar el arbol tarda
+        # un par de segundos, asi que se hace la primera vez que el
+        # usuario elige el modo ML, no al arrancar el juego.
+        self._agente_ml = None
         # La vista avisa los clics llamando a los metodos de este
         # controlador; main.py le asigna la referencia (vista.controlador)
+
+    def _obtener_agente_ml(self):
+        """Carga el dataset y entrena el arbol la primera vez que se
+        necesita; despues reutiliza el mismo agente entrenado."""
+        if self._agente_ml is None:
+            print("[CONTROLADOR] Entrenando el arbol de ML "
+                  "(solo la primera vez)...")
+            tabla = cargar_dataset(RUTA_DATASET)
+            arbol, precision = entrenar_arbol(tabla)
+            print("[CONTROLADOR] Arbol entrenado con precision "
+                  "{:.1%}".format(precision))
+            self._agente_ml = AgenteArbol(arbol)
+        return self._agente_ml
 
     def iniciar(self):
         """Pinta el estado inicial y arranca el ciclo de la interfaz."""
@@ -52,21 +77,42 @@ class GameController:
         self.manejar_reinicio()
 
     def _jugar_turno_ia(self):
-        """Responde con el agente Minimax si el modo lo pide.
+        """Responde con el agente del modo actual (Minimax o ML).
 
-        Mide cuanto tarda y cuantos nodos explora para mostrarlo en
-        las metricas de la interfaz.
+        Ambos agentes entienden el mismo mensaje mejor_jugada(modelo)
+        y guardan sus nodos en nodos_evaluados, asi que el codigo de
+        medicion es comun. Mide cuanto tarda y cuantos nodos revisa
+        para mostrarlo en las metricas de la interfaz.
         """
-        if self.vista.obtener_modo() != GameView.MODO_MINIMAX:
+        modo = self.vista.obtener_modo()
+        print("[CONTROLADOR] Turno de la IA, modo actual: " + modo)
+        if modo == GameView.MODO_MINIMAX:
+            agente = self.agente_minimax
+        elif modo == GameView.MODO_ML:
+            agente = self._obtener_agente_ml()
+        else:
+            print("[CONTROLADOR] El modo no usa IA, la IA no juega")
             return
         if self.modelo.juego_terminado():
+            print("[CONTROLADOR] La partida termino, la IA no juega")
             return
+        print("[CONTROLADOR] La IA empieza a pensar...")
         inicio = time.perf_counter()
-        fila, columna = self.agente_minimax.mejor_jugada(self.modelo)
-        self.modelo.hacer_movimiento(fila, columna)
+        fila, columna = agente.mejor_jugada(self.modelo)
         milisegundos = (time.perf_counter() - inicio) * 1000
+        if not self.modelo.es_movimiento_valido(fila, columna):
+            # El arbol de ML puede proponer una casilla ya ocupada en
+            # estados que vio pocas veces; se juega la primera libre.
+            print("[CONTROLADOR] La IA propuso una casilla ocupada, "
+                  "se usa la primera libre")
+            fila, columna = self.modelo.obtener_movimientos_disponibles()[0]
+        print("[CONTROLADOR] La IA eligio la casilla ({}, {})"
+              .format(fila, columna))
+        self.modelo.hacer_movimiento(fila, columna)
+        print("[CONTROLADOR] Exploro {} nodos en {:.2f} ms"
+              .format(agente.nodos_evaluados, milisegundos))
         self.vista.mostrar_metricas(
-            nodos=self.agente_minimax.nodos_evaluados,
+            nodos=agente.nodos_evaluados,
             tiempo_ms=milisegundos)
         self._actualizar_vista()
 

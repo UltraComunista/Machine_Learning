@@ -1,8 +1,9 @@
-"""Pruebas de integracion del modo Humano vs. Humano.
+"""Pruebas de integracion de los modos de juego.
 
 Verifican el flujo completo MVC: clics en la vista -> controlador ->
-modelo -> vista actualizada. Usan el driver de video "dummy" de pygame
-para no abrir ventanas durante las pruebas.
+modelo -> vista actualizada, en los tres modos (Humano vs. Humano,
+vs. IA Minimax y vs. IA Machine Learning). Usan el driver de video
+"dummy" de pygame para no abrir ventanas durante las pruebas.
 """
 
 import os
@@ -131,11 +132,35 @@ class TestIntegracionHumanoVsHumano(unittest.TestCase):
         self.assertEqual(fichas, 1)
         self.assertIsNone(self.vista.nodos)
 
-    def test_modo_ml_bloqueado_muestra_aviso(self):
+    def test_modo_ml_en_el_menu(self):
         self.vista.pantalla = "menu"
-        self.vista._manejar_click(self.boton("aviso_ml")["rect"].center)
-        self.assertEqual(self.vista.aviso, "Disponible en la semana 3")
-        self.assertEqual(self.vista.obtener_modo(), GameView.MODO_HUMANO)
+        self.vista._manejar_click(self.boton("jugar_ml")["rect"].center)
+        self.assertEqual(self.vista.pantalla, "juego")
+        self.assertEqual(self.vista.obtener_modo(), GameView.MODO_ML)
+
+    def test_modo_ml_la_ia_responde_la_jugada(self):
+        self.vista.modo = GameView.MODO_ML
+        self.controlador.manejar_clic_celda(1, 1)
+        # El humano (X) jugó y la IA (O) respondió: 2 fichas en total
+        fichas = sum(1 for f in range(3) for c in range(3)
+                     if self.modelo.tablero[f][c] != " ")
+        self.assertEqual(fichas, 2)
+        self.assertIsNotNone(self.vista.nodos)
+        self.assertIsNotNone(self.vista.tiempo_ms)
+
+    def test_modo_ml_revisa_muchos_menos_nodos_que_minimax(self):
+        # El arbol de ML solo baja por una rama ya entrenada, mientras
+        # que Minimax explora miles de nodos en la misma jugada.
+        self.vista.modo = GameView.MODO_ML
+        self.controlador.manejar_clic_celda(0, 0)
+        nodos_ml = self.vista.nodos
+
+        self.controlador.manejar_reinicio()
+        self.vista.modo = GameView.MODO_MINIMAX
+        self.controlador.manejar_clic_celda(0, 0)
+        nodos_minimax = self.vista.nodos
+
+        self.assertLess(nodos_ml, nodos_minimax)
 
     def test_boton_jugar_de_nuevo_reinicia(self):
         self.jugar([(0, 0), (1, 0), (0, 1), (1, 1), (0, 2)])
