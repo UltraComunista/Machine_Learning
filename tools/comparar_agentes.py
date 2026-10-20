@@ -19,8 +19,8 @@ import random
 import sys
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, RAIZ)
 
 from model.game_model import GameModel  # noqa: E402
 from model.minimax_agent import MinimaxAgent  # noqa: E402
@@ -137,7 +137,7 @@ def comparacion(agente_ml):
 
 def main():
     print("Cargando dataset y entrenando el arbol...")
-    tabla = cargar_dataset(os.path.join("data", "partidas.csv"))
+    tabla = cargar_dataset(os.path.join(RAIZ, "data", "partidas.csv"))
     arbol, precision = entrenar_arbol(tabla)
     print("Precision del arbol: {:.1%}\n".format(precision))
     agente_ml = AgenteArbol(arbol)

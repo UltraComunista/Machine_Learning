@@ -18,8 +18,8 @@ import os
 import sys
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, RAIZ)
 
 from model.game_model import GameModel  # noqa: E402
 from model.minimax_agent import MinimaxAgent  # noqa: E402
@@ -92,7 +92,7 @@ def main():
     print("Sesion de debugging: backtracking de Minimax en tiempo real")
     print("==========================================================")
     print("Cargando el arbol de ML para la comparacion final...")
-    tabla = cargar_dataset(os.path.join("data", "partidas.csv"))
+    tabla = cargar_dataset(os.path.join(RAIZ, "data", "partidas.csv"))
     arbol, precision = entrenar_arbol(tabla)
     print("Arbol de ML cargado (precision {:.1%}).\n".format(precision))
     agente_ml = AgenteArbol(arbol)

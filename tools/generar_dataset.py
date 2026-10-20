@@ -16,8 +16,8 @@ import os
 import sys
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, RAIZ)
 
 from model.ml_agent import (  # noqa: E402
     GeneradorDatos,
@@ -28,7 +28,7 @@ from model.ml_agent import (  # noqa: E402
 
 PARTIDAS = 2000
 SEMILLA = 42
-RUTA_CSV = os.path.join("data", "partidas.csv")
+RUTA_CSV = os.path.join(RAIZ, "data", "partidas.csv")
 
 
 def main():

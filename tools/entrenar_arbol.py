@@ -21,8 +21,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from sklearn.tree import export_text, plot_tree  # noqa: E402
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, RAIZ)
 
 from model.ml_agent import (  # noqa: E402
     NOMBRES_CARACTERISTICAS,
@@ -30,9 +30,9 @@ from model.ml_agent import (  # noqa: E402
     entrenar_arbol,
 )
 
-RUTA_CSV = os.path.join("data", "partidas.csv")
-RUTA_TEXTO = os.path.join("data", "arbol.txt")
-RUTA_FIGURA = os.path.join("data", "arbol.png")
+RUTA_CSV = os.path.join(RAIZ, "data", "partidas.csv")
+RUTA_TEXTO = os.path.join(RAIZ, "data", "arbol.txt")
+RUTA_FIGURA = os.path.join(RAIZ, "data", "arbol.png")
 
 # Niveles del arbol que se dibujan en la figura. El arbol completo
 # tiene muchas ramas y en una imagen seria ilegible.
