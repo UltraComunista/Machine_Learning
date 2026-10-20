@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tres en Raya - API REST</title>
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Tres en Raya</h1>
+      <p>Patron MVC + Minimax + Machine Learning, expuestos como API REST</p>
+    </header>
+
+    <section id="menu">
+      <h2>Elige el modo de juego</h2>
+      <div class="botones">
+        <button class="modo" data-modo="hh">Humano vs Humano</button>
+        <button class="modo" data-modo="minimax">Humano vs IA Minimax</button>
+        <button class="modo" data-modo="ml">Humano vs IA Machine Learning</button>
+      </div>
+    </section>
+
+    <section id="juego" class="oculto">
+      <div class="columnas">
+        <div id="tablero" role="grid" aria-label="Tablero de tres en raya"></div>
+        <aside>
+          <p id="modo-actual"></p>
+          <p id="turno"></p>
+          <p id="mensaje"></p>
+          <div id="metricas" class="oculto">
+            <p>Nodos explorados: <strong id="nodos"></strong></p>
+            <p>Tiempo: <strong id="tiempo"></strong> ms</p>
+          </div>
+          <div id="caja-reglas" class="oculto">
+            <h3>Como decidio el arbol:</h3>
+            <ol id="reglas"></ol>
+          </div>
+          <button id="volver">Volver al menu</button>
+        </aside>
+      </div>
+    </section>
+
+    <section id="seccion-arbol">
+      <h2>Arbol de decision del agente de ML</h2>
+      <p>
+        El arbol aprendio del dataset de jugadas de Minimax
+        (<code>data/partidas.csv</code>) con un 80% de entrenamiento y
+        20% de prueba. Haz clic en los circulos para expandir o colapsar
+        ramas; las hojas indican la casilla donde juega (0-8).
+      </p>
+      <p id="precision" class="oculto">
+        Precision en datos de prueba: <strong id="valor-precision"></strong>
+      </p>
+      <div class="botones">
+        <button id="cargar-arbol">Ver arbol interactivo</button>
+        <a class="enlace" href="/api/arbol/imagen" target="_blank">
+          Ver imagen exportada con sklearn
+        </a>
+      </div>
+      <div id="arbol"></div>
+    </section>
+  </main>
+
+  <script src="d3.v7.min.js"></script>
+  <script src="juego.js"></script>
+</body>
+</html>
