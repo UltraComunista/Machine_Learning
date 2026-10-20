@@ -123,31 +123,6 @@ pip install -r requirements.txt
 python3 main.py
 ```
 
-## API REST y visualización del árbol
-
-El mismo modelo y agentes también se exponen como API REST con Flask
-(`api/app.py`), con una página web que consume la API: sirve para ver el
-flujo MVC como rutas HTTP y para explorar el árbol de decisión del ML de
-forma interactiva (D3, sin depender de internet).
-
-```bash
-python3 api/app.py
-# abrir http://127.0.0.1:5000 en el navegador
-```
-
-Rutas principales:
-
-| Ruta | Qué hace |
-|---|---|
-| `POST /api/partidas` | Crea una partida (`modo`: `hh`, `minimax` o `ml`) |
-| `POST /api/partidas/<id>/movimientos` | Juega una casilla; la IA responde en la misma llamada |
-| `GET /api/partidas/<id>` | Estado de la partida |
-| `GET /api/arbol` | Árbol de decisión entrenado en JSON (con su precisión) |
-| `GET /api/arbol/imagen` | Imagen del árbol exportada con sklearn |
-
-En el modo ML, cada respuesta de la IA incluye las reglas (las preguntas
-que el árbol se hizo para decidir) y las métricas de nodos y tiempo.
-
 ## Ejecutar las pruebas
 
 ```bash
