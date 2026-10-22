@@ -1,5 +1,2 @@
 pygame
-pandas
-scikit-learn
-graphviz
 matplotlib

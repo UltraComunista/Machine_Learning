@@ -1,16 +1,21 @@
-"""Generación de datos sintéticos y modelo de árbol de decisión.
+"""Generación de datos y modelo de árbol de decision, todo propio.
 
 Plan de la semana 3:
 - Dia 1: simular partidas Minimax (IA) contra un jugador aleatorio y
   registrar cada jugada de la IA como una fila de datos.
 - Dia 2: guardar el dataset en un archivo CSV.
-- Dia 3: entrenar un arbol de decision con scikit-learn.
+- Dia 3: entrenar un arbol de decision.
 - Dia 4: conectar el agente de ML a la interfaz.
 - Dia 5: comparar precision y tiempos contra Minimax.
 
 La idea central del proyecto: en vez de buscar la jugada explorando
 el arbol (Minimax), el modelo de ML aprende a predecirla directamente
 a partir de ejemplos de partidas donde Minimax ya eligio bien.
+
+No se usan librerias de machine learning: el arbol de decision es
+nuestra propia implementacion (model/arbol_decision.py), la separacion
+entrenamiento/prueba se hace a mano y el CSV se lee con el modulo
+estandar csv. Ver modelo/arbol_decision.py para la logica del arbol.
 
 Codificacion usada en el dataset:
 - casilla vacia -> 0
@@ -22,12 +27,10 @@ Cada fila tiene 10 columnas: las 9 casillas del tablero en orden
 que eligio la IA, numerada del 0 al 8.
 """
 
+import csv
 import random
 
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
-
+from model.arbol_decision import ArbolDecision
 from model.game_model import GameModel
 from model.minimax_agent import MinimaxAgent
 
@@ -59,18 +62,39 @@ def casilla_a_numero(fila, columna):
 
 NOMBRES_CARACTERISTICAS = ["c{}".format(i) for i in range(9)]
 NOMBRE_ETIQUETA = "jugada"
+NOMBRES_COLUMNAS = NOMBRES_CARACTERISTICAS + [NOMBRE_ETIQUETA]
 VALORES_CASILLA = (CODIGO_VACIO, CODIGO_X, CODIGO_O)
 
 
+class TablaDatos:
+    """Tabla de datos con encabezado y filas, sin pandas.
+
+    Guarda el encabezado (los nombres de columna) y las filas como
+    listas de numeros. Es lo minimo que el proyecto necesita para
+    mover datos entre el CSV, el entrenamiento y la validacion.
+    """
+
+    def __init__(self, encabezado, filas):
+        self.encabezado = list(encabezado)
+        self.filas = [list(f) for f in filas]
+
+    def __len__(self):
+        return len(self.filas)
+
+    def columna(self, nombre):
+        """Devuelve una columna completa como lista, por su nombre."""
+        indice = self.encabezado.index(nombre)
+        return [fila[indice] for fila in self.filas]
+
+
 def construir_dataset(datos):
-    """Convierte la lista de filas en un DataFrame de pandas.
+    """Convierte la lista de filas en una TablaDatos.
 
     Las 9 primeras columnas (c0 a c8) son las caracteristicas, es
     decir el estado del tablero. La ultima (jugada) es la etiqueta,
     la casilla que Minimax eligio en ese estado.
     """
-    columnas = NOMBRES_CARACTERISTICAS + [NOMBRE_ETIQUETA]
-    return pd.DataFrame(datos, columns=columnas)
+    return TablaDatos(NOMBRES_COLUMNAS, datos)
 
 
 def validar_dataset(tabla):
@@ -81,15 +105,15 @@ def validar_dataset(tabla):
     Si todo esta bien devuelve una lista vacia.
     """
     problemas = []
-    if tabla.empty:
+    if len(tabla) == 0:
         problemas.append("el dataset esta vacio")
         return problemas
     for nombre in NOMBRES_CARACTERISTICAS:
-        valores = set(tabla[nombre].unique())
+        valores = set(tabla.columna(nombre))
         if not valores.issubset(set(VALORES_CASILLA)):
             problemas.append("la columna {} tiene valores invalidos: {}"
                              .format(nombre, sorted(valores)))
-    jugadas = set(tabla[NOMBRE_ETIQUETA].unique())
+    jugadas = set(tabla.columna(NOMBRE_ETIQUETA))
     if not jugadas.issubset(set(range(9))):
         problemas.append("hay etiquetas fuera del rango 0-8: {}"
                          .format(sorted(jugadas)))
@@ -97,17 +121,45 @@ def validar_dataset(tabla):
 
 
 def guardar_dataset(tabla, ruta):
-    """Guarda el DataFrame en un archivo CSV con encabezado.
+    """Guarda la tabla en un CSV con encabezado, con el modulo csv.
 
     El encabezado (c0...c8, jugada) es importante: cuando el modelo
     entrena, cada columna debe tener nombre para saber cual es cual.
     """
-    tabla.to_csv(ruta, index=False)
+    with open(ruta, "w", newline="") as archivo:
+        escritor = csv.writer(archivo)
+        escritor.writerow(tabla.encabezado)
+        escritor.writerows(tabla.filas)
 
 
 def cargar_dataset(ruta):
-    """Lee un CSV del dataset y lo devuelve como DataFrame."""
-    return pd.read_csv(ruta)
+    """Lee un CSV del dataset y lo devuelve como TablaDatos.
+
+    Lee numeros enteros a partir del encabezado; sin pandas.
+    """
+    with open(ruta, newline="") as archivo:
+        lector = csv.reader(archivo)
+        encabezado = next(lector)
+        filas = [[int(valor) for valor in fila] for fila in lector if fila]
+    return TablaDatos(encabezado, filas)
+
+
+def separar_entrenamiento_prueba(tabla, semilla,
+                                 proporcion_prueba=0.2):
+    """Mezcla las filas y las parte en entrenamiento (80%) y prueba
+    (20%).
+
+    La mezcla usa su propio generador aleatorio con la semilla dada,
+    asi que la separacion es identica en cada ejecucion (misma semilla,
+    mismos datos de entrenamiento y de prueba).
+    """
+    azar = random.Random(semilla)
+    indices = list(range(len(tabla)))
+    azar.shuffle(indices)
+    corte = int(len(indices) * (1 - proporcion_prueba))
+    entrenamiento = [tabla.filas[i] for i in indices[:corte]]
+    prueba = [tabla.filas[i] for i in indices[corte:]]
+    return entrenamiento, prueba
 
 
 def entrenar_arbol(tabla, semilla=42):
@@ -115,17 +167,21 @@ def entrenar_arbol(tabla, semilla=42):
 
     Separa el dataset en 80% para entrenar y 20% para probar. La
     precision es la proporcion de jugadas del 20% de prueba que el
-    arbol acierta. La semilla fija hace que la separacion sea la
-    misma en cada ejecucion.
+    arbol acierta. El arbol es nuestra implementacion propia de
+    model/arbol_decision.py: el criterio de Gini, la busqueda de la
+    mejor pregunta y la recursion son codigo nuestro.
     """
-    caracteristicas = tabla[NOMBRES_CARACTERISTICAS]
-    etiquetas = tabla[NOMBRE_ETIQUETA]
-    x_entrena, x_prueba, y_entrena, y_prueba = train_test_split(
-        caracteristicas, etiquetas,
-        test_size=0.2, random_state=semilla)
-    arbol = DecisionTreeClassifier(random_state=semilla)
-    arbol.fit(x_entrena, y_entrena)
-    precision = arbol.score(x_prueba, y_prueba)
+    entrenamiento, prueba = separar_entrenamiento_prueba(tabla, semilla)
+    indice_etiqueta = tabla.encabezado.index(NOMBRE_ETIQUETA)
+    filas = [fila[:indice_etiqueta] for fila in entrenamiento]
+    etiquetas = [fila[indice_etiqueta] for fila in entrenamiento]
+    arbol = ArbolDecision().ajustar(filas, etiquetas)
+
+    aciertos = 0
+    for fila in prueba:
+        if arbol.predecir(fila[:indice_etiqueta]) == fila[indice_etiqueta]:
+            aciertos += 1
+    precision = aciertos / len(prueba) if prueba else 0.0
     return arbol, precision
 
 
@@ -144,15 +200,13 @@ class AgenteArbol:
 
     def predecir_jugada(self, tablero):
         """Devuelve la casilla elegida (numero del 0 al 8) para un
-        tablero dado. Se pasa un DataFrame con nombres de columna
-        para que sklearn no lance advertencias. Cuenta cuantos nodos
-        del arbol recorrio la prediccion para poder comparar con los
-        miles de nodos que explora Minimax."""
+        tablero dado. Cuenta cuantos nodos del arbol recorrio la
+        prediccion (las preguntas mas la hoja) para poder comparar con
+        los miles de nodos que explora Minimax."""
         estado = codificar_tablero(tablero)
-        consulta = pd.DataFrame([estado], columns=NOMBRES_CARACTERISTICAS)
-        ruta = self.arbol.decision_path(consulta)
-        self.nodos_evaluados = int(ruta.sum())
-        return int(self.arbol.predict(consulta)[0])
+        jugada, ruta = self.arbol.predecir_con_ruta(estado)
+        self.nodos_evaluados = len(ruta) + 1
+        return jugada
 
     def mejor_jugada(self, modelo):
         """Devuelve la casilla (fila, columna) que propone el arbol.
@@ -165,29 +219,20 @@ class AgenteArbol:
 
     def explicar_jugada(self, tablero):
         """Devuelve (jugada, reglas) para un tablero: la casilla que
-        elegiria y las preguntas que se hizo para decidir.
+        eligiria y las preguntas que se hizo para decidir.
 
         Cada regla es un nodo del arbol: una pregunta del tipo
         "¿c4 <= 0.5?" (¿esta libre el centro?) con la respuesta que
-        tomo para ese tablero. Es lo mismo que se ve en el texto de
-        sklearn.tree.export_text, pero solo con la rama que se usa.
+        tomo para ese tablero. Es el mismo recorrido que hace
+        predecir_jugada, pero guardando el camino.
         """
         estado = codificar_tablero(tablero)
-        nodo = 0
+        jugada, ruta = self.arbol.predecir_con_ruta(estado)
         reglas = []
-        while self.arbol.tree_.children_left[nodo] != -1:
-            casilla = self.arbol.tree_.feature[nodo]
-            umbral = self.arbol.tree_.threshold[nodo]
-            if estado[casilla] <= umbral:
-                respuesta = "si"
-                nodo = self.arbol.tree_.children_left[nodo]
-            else:
-                respuesta = "no"
-                nodo = self.arbol.tree_.children_right[nodo]
+        for caracteristica, umbral, respuesta in ruta:
             reglas.append("¿c{} <= {:.1f}? c{}={} -> {}".format(
-                casilla, umbral, casilla, estado[casilla], respuesta))
-        jugada = int(self.arbol.classes_[
-            self.arbol.tree_.value[nodo].argmax()])
+                caracteristica, umbral, caracteristica,
+                estado[caracteristica], respuesta))
         return jugada, reglas
 
 

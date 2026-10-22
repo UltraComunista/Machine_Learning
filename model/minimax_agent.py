@@ -45,7 +45,7 @@ class MinimaxAgent:
         return self.PUNTAJE_EMPATE
 
     def minimax(self, modelo, profundidad, maximizando,
-                traza=False, demora=0.0):
+                traza=True, demora=0.0):
         """Devuelve el mejor puntaje alcanzable desde este estado.
 
         Llega a las hojas del arbol (partidas terminadas) con
@@ -106,7 +106,7 @@ class MinimaxAgent:
             mejor = min(puntaje_hijo, mejor)
         return mejor
 
-    def mejor_jugada(self, modelo, traza=False, demora=0.0):
+    def mejor_jugada(self, modelo, traza=True, demora=0.0):
         """Devuelve la casilla (fila, columna) optima para la IA.
 
         Explora cada movimiento disponible con Minimax y se queda con

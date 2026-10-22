@@ -15,9 +15,10 @@ dataset generado con las propias simulaciones del juego.
 1. **Humano vs. Humano**: dos jugadores en la misma interfaz.
 2. **Humano vs. IA Minimax**: la IA explora recursivamente el árbol de
    jugadas posibles y elige el movimiento óptimo.
-3. **Humano vs. IA Machine Learning**: un `DecisionTreeClassifier`
-   entrenado con miles de partidas simuladas predice la mejor jugada sin
-   explorar el árbol en tiempo real.
+3. **Humano vs. IA Machine Learning**: un árbol de decisión
+   implementado desde cero (`model/arbol_decision.py`) y entrenado con
+   miles de partidas simuladas predice la mejor jugada sin explorar
+   el árbol en tiempo real.
 
 ## Arquitectura (patrón MVC)
 
@@ -25,6 +26,7 @@ dataset generado con las propias simulaciones del juego.
 |---|---|---|
 | Modelo | `model/game_model.py` | Estado del tablero, reglas, validación de victorias y empates |
 | Modelo | `model/minimax_agent.py` | Algoritmo Minimax con backtracking |
+| Modelo | `model/arbol_decision.py` | Árbol de decisión propio: Gini, particiones y predicción |
 | Modelo | `model/ml_agent.py` | Generación del dataset y entrenamiento del árbol de decisión |
 | Vista | `view/gui_view.py` | Interfaz gráfica: tablero, menús y métricas |
 | Controlador | `controller/game_controller.py` | Sincroniza la interacción del usuario con el modelo y la vista |
@@ -34,10 +36,13 @@ juego: toda la comunicación pasa por el controlador.
 
 ## Tecnologías
 
-- Python 3
+- Python 3 (incluidos los módulos estándar `csv` y `random`)
 - Pygame (interfaz gráfica)
-- Scikit-Learn (árbol de decisión)
-- Pandas (manejo del dataset)
+- Matplotlib (dibujo del árbol de decisión en `tools/entrenar_arbol.py`)
+
+El árbol de decisión **no** usa scikit-learn: la selección de
+preguntas con el criterio de Gini, la separación entrenamiento/prueba
+y la predicción son implementación propia en `model/arbol_decision.py`.
 
 Fuente pixel art: Press Start 2P de Codeman38, licencia SIL Open Font
 License 1.1.
@@ -94,8 +99,8 @@ Herramientas de análisis del repositorio:
   de Minimax en una posición pequeña, las **reglas que el árbol se
   pregunta** para decidir y la comparativa de tiempos y nodos.
 - `tools/entrenar_arbol.py` — entrena el árbol y exporta su
-  estructura completa en `data/arbol.txt` (salida de
-  `sklearn.tree.export_text`) y `data/arbol.png`.
+  estructura completa en `data/arbol.txt` (reglas en texto, generadas
+  por `ArbolDecision.a_texto`) y `data/arbol.png`.
 - `MinimaxAgent.mejor_jugada(modelo, traza=True, demora=0.5)` —
   activa la traza de llamadas recursivas con pausa entre pasos.
 

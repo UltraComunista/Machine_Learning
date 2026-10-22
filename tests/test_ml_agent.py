@@ -4,6 +4,7 @@ import os
 import tempfile
 import unittest
 
+from model.arbol_decision import ArbolDecision, gini
 from model.ml_agent import (
     AgenteArbol,
     GeneradorDatos,
@@ -13,6 +14,7 @@ from model.ml_agent import (
     codificar_tablero,
     entrenar_arbol,
     guardar_dataset,
+    separar_entrenamiento_prueba,
     validar_dataset,
 )
 from model.game_model import GameModel
@@ -96,7 +98,7 @@ class TestDataset(unittest.TestCase):
 
     def test_el_dataset_tiene_10_columnas_con_nombre(self):
         tabla = construir_dataset(self.datos)
-        self.assertEqual(list(tabla.columns),
+        self.assertEqual(tabla.encabezado,
                          ["c0", "c1", "c2", "c3", "c4",
                           "c5", "c6", "c7", "c8", "jugada"])
 
@@ -141,7 +143,7 @@ class TestArbolDecision(unittest.TestCase):
 
     def test_cargar_dataset_lee_el_csv_del_proyecto(self):
         self.assertEqual(len(self.tabla), 6844)
-        self.assertEqual(list(self.tabla.columns),
+        self.assertEqual(self.tabla.encabezado,
                          ["c0", "c1", "c2", "c3", "c4",
                           "c5", "c6", "c7", "c8", "jugada"])
 
@@ -171,6 +173,70 @@ class TestArbolDecision(unittest.TestCase):
         self.assertTrue(0 <= jugada <= 8)
         self.assertTrue(reglas)
         self.assertIn("c", reglas[0])
+
+
+class TestArbolDecisionPropio(unittest.TestCase):
+    """Verifica la implementacion propia del arbol (model/arbol_decision).
+
+    Estas pruebas existen porque el proyecto no usa scikit-learn: el
+    criterio de Gini, la busqueda de la mejor pregunta y la recursion
+    son codigo nuestro y hay que verificarlos directamente.
+    """
+
+    def test_gini_de_grupo_puro_es_cero(self):
+        self.assertEqual(gini([4, 4, 4]), 0.0)
+
+    def test_gini_de_grupo_mezclado_es_positivo(self):
+        # Dos clases parejas: 1 - (0.5^2 + 0.5^2) = 0.5
+        self.assertAlmostEqual(gini([0, 1]), 0.5)
+
+    def test_aprende_una_regla_perfecta(self):
+        # Regla del toy set: si c0 esta vacia (0), juega c4 (4);
+        # si no, juega c8 (8). El arbol deberia aprenderla con
+        # exactitud, sin errores.
+        filas = []
+        etiquetas = []
+        for valor_c0 in (0, 1, 2):
+            for relleno in range(8):
+                fila = [0] * 9
+                fila[0] = valor_c0
+                fila[1 + relleno % 8] = 1
+                filas.append(fila)
+                etiquetas.append(4 if valor_c0 == 0 else 8)
+        arbol = ArbolDecision().ajustar(filas, etiquetas)
+        self.assertEqual(arbol.predecir([0] + [1] * 8), 4)
+        self.assertEqual(arbol.predecir([2] + [1] * 8), 8)
+
+    def test_la_ruta_explica_la_decision(self):
+        filas = [[0] * 9, [1] * 9]
+        etiquetas = [4, 8]
+        arbol = ArbolDecision().ajustar(filas, etiquetas)
+        jugada, ruta = arbol.predecir_con_ruta([0] * 9)
+        self.assertEqual(jugada, 4)
+        self.assertEqual(len(ruta), 1)
+        caracteristica, umbral, respuesta = ruta[0]
+        self.assertEqual(caracteristica, 0)
+        self.assertEqual(respuesta, "si")
+
+    def test_a_texto_exporta_preguntas_y_hojas(self):
+        arbol = ArbolDecision().ajustar([[0] * 9, [1] * 9], [4, 8])
+        texto = arbol.a_texto(["c{}".format(i) for i in range(9)])
+        self.assertIn("|--- c0 <= 0.50", texto)
+        self.assertIn("|--- class: 4", texto)
+
+    def test_la_separacion_80_20_respeta_la_proporcion(self):
+        datos = [[i % 3] * 9 + [i % 9] for i in range(100)]
+        tabla = construir_dataset(datos)
+        entrenamiento, prueba = separar_entrenamiento_prueba(tabla, 42)
+        self.assertEqual(len(entrenamiento), 80)
+        self.assertEqual(len(prueba), 20)
+
+    def test_la_separacion_es_determinista_con_la_semilla(self):
+        datos = [[i % 3] * 9 + [i % 9] for i in range(50)]
+        tabla = construir_dataset(datos)
+        una = separar_entrenamiento_prueba(tabla, 42)
+        otra = separar_entrenamiento_prueba(tabla, 42)
+        self.assertEqual(una, otra)
 
 
 if __name__ == "__main__":
